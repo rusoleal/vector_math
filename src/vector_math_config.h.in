@@ -1,0 +1,4 @@
+// the configured options and settings for vector_math
+#define vector_math_VERSION_MAJOR @vector_math_VERSION_MAJOR@
+#define vector_math_VERSION_MINOR @vector_math_VERSION_MINOR@
+#define vector_math_VERSION_PATCH @vector_math_VERSION_PATCH@
