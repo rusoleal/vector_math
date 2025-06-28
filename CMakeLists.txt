@@ -8,6 +8,8 @@ set(CMAKE_CXX_STANDARD 17)
 
 option(VECTOR_MATH_BUILD_TEST "Enable building tests" OFF)
 
+option(VECTOR_MATH_BUILD_BENCHMARK "Enable building benchmark" OFF)
+
 include_directories(inc)
 
 message(STATUS ${PROJECT_NAME})
@@ -36,4 +38,17 @@ if (VECTOR_MATH_BUILD_TEST)
     add_test(NAME vector_math_test COMMAND ${PROJECT_NAME}_test)
     #add_test(NAME gltf_test2 COMMAND ${PROJECT_NAME}_test)
     list(APPEND CMAKE_CTEST_ARGUMENTS "--output-on-failure")
+endif()
+
+if (VECTOR_MATH_BUILD_BENCHMARK)
+    SET(BENCHMARK_DOWNLOAD_DEPENDENCIES ON CACHE BOOL "enable download dependencies")
+    include(benchmark.cmake)
+
+    add_executable(${PROJECT_NAME}_benchmark
+        benchmark/main.cpp
+    )
+    target_link_libraries(${PROJECT_NAME}_benchmark
+        ${PROJECT_NAME}
+        benchmark::benchmark
+    )
 endif()
