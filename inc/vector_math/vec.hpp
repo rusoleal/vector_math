@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdint.h>
 #include <cstdlib>
 
 namespace systems::leal::vector_math {
