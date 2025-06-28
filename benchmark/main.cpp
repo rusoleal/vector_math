@@ -8,6 +8,20 @@ static void BM_StringCreation(benchmark::State& state) {
 // Register the function as a benchmark
 BENCHMARK(BM_StringCreation);
 
+static void BM_MatrixCreation(benchmark::State& state) {
+    for (auto _ : state){
+        systems::leal::vector_math::Matrix4<float> emptyMatrix;
+    }
+}
+BENCHMARK(BM_MatrixCreation);
+
+static void BM_MatrixIdentity(benchmark::State& state) {
+    for (auto _ : state){
+        auto emptyMatrix = systems::leal::vector_math::Matrix4<float>::identity();
+    }
+}
+BENCHMARK(BM_MatrixIdentity);
+
 static void BM_MatrixMultiply(benchmark::State& state) {
     auto m1 = systems::leal::vector_math::Matrix4<float>::identity();
     auto m2 = systems::leal::vector_math::Matrix4<float>(1);
