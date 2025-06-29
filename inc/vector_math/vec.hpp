@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cmath>
 #include <stdint.h>
 #include <cstdlib>
 #include <vector_math/common.hpp>
@@ -103,7 +104,7 @@ namespace systems::leal::vector_math {
         }
 
         DATA_TYPE length() {
-            return sqrt(lengthSquared());
+            return std::sqrt(lengthSquared());
         }
 
         void normalize() {
@@ -112,7 +113,7 @@ namespace systems::leal::vector_math {
             if (isZero<DATA_TYPE>(lenSqr))
                 return;
 
-            DATA_TYPE invLength = DATA_TYPE(1) / sqrt(lenSqr);
+            DATA_TYPE invLength = DATA_TYPE(1) / std::sqrt(lenSqr);
 
             for (int a=0; a<SIZE; a++) {
                 this->data[a] *= invLength;
