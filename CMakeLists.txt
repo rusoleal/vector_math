@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22.1)
 
-project(vector_math VERSION 0.0.1)
+project(vector_math VERSION 0.0.2)
 
 configure_file(src/vector_math_config.h.in vector_math_config.h)
 
@@ -29,11 +29,16 @@ target_include_directories(vector_math PUBLIC
 if (VECTOR_MATH_BUILD_TEST)
     include(CTest)
 
+    SET(BUILD_GMOCK OFF CACHE BOOL "DISABLE GMOCK")
+    SET(INSTALL_GTEST OFF CACHE BOOL "DISABLE INSTALL_GTEST")
+    include(dependencies/googletest.cmake)
+
     add_executable(${PROJECT_NAME}_test 
         test/main.cpp
     )
     target_link_libraries(${PROJECT_NAME}_test 
         ${PROJECT_NAME}
+        gtest
     )
     add_test(NAME vector_math_test COMMAND ${PROJECT_NAME}_test)
     #add_test(NAME gltf_test2 COMMAND ${PROJECT_NAME}_test)
@@ -42,7 +47,7 @@ endif()
 
 if (VECTOR_MATH_BUILD_BENCHMARK)
     SET(BENCHMARK_DOWNLOAD_DEPENDENCIES ON CACHE BOOL "enable download dependencies")
-    include(benchmark.cmake)
+    include(dependencies/benchmark.cmake)
 
     add_executable(${PROJECT_NAME}_benchmark
         benchmark/main.cpp

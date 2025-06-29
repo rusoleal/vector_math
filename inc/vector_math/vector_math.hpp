@@ -6,4 +6,5 @@
 namespace systems::leal::vector_math {
 
     std::string getVersion();
+
 }

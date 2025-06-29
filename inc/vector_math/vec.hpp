@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <cstdlib>
+#include <vector_math/common.hpp>
 
 namespace systems::leal::vector_math {
 
@@ -82,6 +83,45 @@ namespace systems::leal::vector_math {
             for (uint32_t a=0; a<lhs.Size; a++) {
                 toReturn.data[a] = lhs.data[a] / scalar;
             }
+            return toReturn;
+        }
+
+        Vec<DATA_TYPE, SIZE> operator-() const {
+            Vec<DATA_TYPE, SIZE> toReturn;
+            for (int a=0; a<SIZE; a++) {
+                toReturn.data[a] = -this->data[a];
+            }
+            return toReturn;
+        }
+
+        DATA_TYPE lengthSquared() {
+            DATA_TYPE toReturn = 0.0;
+            for (int a=0; a<SIZE; a++) {
+                toReturn += this->data[a] * this->data[a];
+            }
+            return toReturn;
+        }
+
+        DATA_TYPE length() {
+            return sqrt(lengthSquared());
+        }
+
+        void normalize() {
+            DATA_TYPE lenSqr = lengthSquared();
+
+            if (isZero<DATA_TYPE>(lenSqr))
+                return;
+
+            DATA_TYPE invLength = DATA_TYPE(1) / sqrt(lenSqr);
+
+            for (int a=0; a<SIZE; a++) {
+                this->data[a] *= invLength;
+            }
+        }
+
+        Vec<DATA_TYPE, SIZE> normalized() const {
+            auto toReturn = *this;
+            toReturn.normalize();
             return toReturn;
         }
     };

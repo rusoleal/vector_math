@@ -1,13 +1,16 @@
 #include <benchmark/benchmark.h>
 #include <vector_math/matrix4.hpp>
 
+// dummy
 static void BM_StringCreation(benchmark::State& state) {
   for (auto _ : state)
     std::string empty_string;
 }
-// Register the function as a benchmark
 BENCHMARK(BM_StringCreation);
 
+///////////////////////
+// Matrix4 benchmark //
+///////////////////////
 static void BM_MatrixCreation(benchmark::State& state) {
     for (auto _ : state){
         systems::leal::vector_math::Matrix4<float> emptyMatrix;
@@ -39,5 +42,36 @@ static void BM_MatrixByVector(benchmark::State& state) {
     }
 }
 BENCHMARK(BM_MatrixByVector);
+
+static void BM_LookAt(benchmark::State& state) {
+    auto eye = systems::leal::vector_math::Vector3<float>(0,0,0);
+    auto target = systems::leal::vector_math::Vector3<float>(0,0,1000);
+    auto up = systems::leal::vector_math::Vector3<float>(0,1,0);
+    for (auto _ : state){
+        systems::leal::vector_math::Matrix4<float>::lookAt(eye, target, up);
+    }
+}
+BENCHMARK(BM_LookAt);
+
+///////////////////////
+// Vector3 benchmark //
+///////////////////////
+static void BM_CrossVector(benchmark::State& state) {
+    auto v1 = systems::leal::vector_math::Vector3<float>(1,2,3);
+    auto v2 = systems::leal::vector_math::Vector3<float>(0,2,3);
+    for (auto _ : state){
+        systems::leal::vector_math::Vector3<float>::cross(v1,v2);
+    }
+}
+BENCHMARK(BM_CrossVector);
+
+static void BM_DotVector(benchmark::State& state) {
+    auto v1 = systems::leal::vector_math::Vector3<float>(1,2,3);
+    auto v2 = systems::leal::vector_math::Vector3<float>(0,2,3);
+    for (auto _ : state){
+        systems::leal::vector_math::Vector3<float>::dot(v1,v2);
+    }
+}
+BENCHMARK(BM_DotVector);
 
 BENCHMARK_MAIN();
