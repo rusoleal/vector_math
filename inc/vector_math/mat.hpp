@@ -10,6 +10,10 @@ namespace systems::leal::vector_math {
         Mat():Vec<DATA_TYPE,ROWS*COLS>(){}
         Mat(DATA_TYPE value):Vec<DATA_TYPE,ROWS*COLS>(value) {}
 
+        ///////////////
+        // operators //
+        ///////////////
+
         template<uint32_t N>
         Mat<DATA_TYPE, ROWS, N> operator*(const Mat<DATA_TYPE,COLS,N> &rhs) const {
             Mat<DATA_TYPE, ROWS, N> toReturn;
