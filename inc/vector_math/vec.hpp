@@ -9,7 +9,7 @@ namespace systems::leal::vector_math
 {
 
     template <class DATA_TYPE, uint32_t SIZE>
-    class Vec
+    class alignas(DATA_TYPE) Vec
     {
     public:
         typedef DATA_TYPE DataType;

@@ -1,5 +1,6 @@
 #include <benchmark/benchmark.h>
 #include <vector_math/matrix4.hpp>
+#include <vector_math/matrix4f.hpp>
 
 #include <glm/vec3.hpp> // glm::vec3
 #include <glm/vec4.hpp> // glm::vec4
@@ -7,6 +8,8 @@
 #include <glm/ext/matrix_transform.hpp> // glm::translate, glm::rotate, glm::scale
 #include <glm/ext/matrix_clip_space.hpp> // glm::perspective
 #include <glm/ext/scalar_constants.hpp> 
+
+using namespace systems::leal::vector_math;
 
 // dummy
 static void BM_StringCreation(benchmark::State& state) {
@@ -18,39 +21,39 @@ BENCHMARK(BM_StringCreation);
 ///////////////////////
 // Matrix4 benchmark //
 ///////////////////////
-static void BM_MatrixCreation(benchmark::State& state) {
+static void BM_Matrix4Creation(benchmark::State& state) {
     for (auto _ : state){
         benchmark::DoNotOptimize(systems::leal::vector_math::Matrix4<float>());
     }
 }
-BENCHMARK(BM_MatrixCreation);
+BENCHMARK(BM_Matrix4Creation);
 
-static void BM_MatrixIdentity(benchmark::State& state) {
+static void BM_Matrix4Identity(benchmark::State& state) {
     for (auto _ : state){
         benchmark::DoNotOptimize(systems::leal::vector_math::Matrix4<float>::identity());
     }
 }
-BENCHMARK(BM_MatrixIdentity);
+BENCHMARK(BM_Matrix4Identity);
 
-static void BM_MatrixMultiply(benchmark::State& state) {
+static void BM_Matrix4Multiply(benchmark::State& state) {
     auto m1 = systems::leal::vector_math::Matrix4<float>::identity();
     auto m2 = systems::leal::vector_math::Matrix4<float>(1);
     for (auto _ : state){
         benchmark::DoNotOptimize(m1 * m2);
     }
 }
-BENCHMARK(BM_MatrixMultiply);
+BENCHMARK(BM_Matrix4Multiply);
 
-static void BM_MatrixByVector(benchmark::State& state) {
+static void BM_Matrix4ByVector(benchmark::State& state) {
     auto m1 = systems::leal::vector_math::Matrix4<float>::identity();
     auto v1 = systems::leal::vector_math::Vector4<float>(1,2,3,4);
     for (auto _ : state){
         benchmark::DoNotOptimize(m1 * v1);
     }
 }
-BENCHMARK(BM_MatrixByVector);
+BENCHMARK(BM_Matrix4ByVector);
 
-static void BM_LookAt(benchmark::State& state) {
+static void BM_Matrix4LookAt(benchmark::State& state) {
     auto eye = systems::leal::vector_math::Vector3<float>(0,0,0);
     auto target = systems::leal::vector_math::Vector3<float>(0,0,1000);
     auto up = systems::leal::vector_math::Vector3<float>(0,1,0);
@@ -58,7 +61,52 @@ static void BM_LookAt(benchmark::State& state) {
         benchmark::DoNotOptimize(systems::leal::vector_math::Matrix4<float>::lookAt(eye, target, up));
     }
 }
-BENCHMARK(BM_LookAt);
+BENCHMARK(BM_Matrix4LookAt);
+
+////////////////////////
+// Matrix4f benchmark //
+////////////////////////
+static void BM_Matrix4fCreation(benchmark::State& state) {
+    for (auto _ : state){
+        benchmark::DoNotOptimize(systems::leal::vector_math::Matrix4f());
+    }
+}
+BENCHMARK(BM_Matrix4fCreation);
+
+static void BM_Matrix4fIdentity(benchmark::State& state) {
+    for (auto _ : state){
+        benchmark::DoNotOptimize(systems::leal::vector_math::Matrix4f::identity());
+    }
+}
+BENCHMARK(BM_Matrix4fIdentity);
+
+static void BM_Matrix4fMultiply(benchmark::State& state) {
+    systems::leal::vector_math::Matrix4f m1 = systems::leal::vector_math::Matrix4f::identity();
+    systems::leal::vector_math::Matrix4f m2 = systems::leal::vector_math::Matrix4f(1);
+    for (auto _ : state){
+        benchmark::DoNotOptimize(m1 * m2);
+    }
+}
+BENCHMARK(BM_Matrix4fMultiply);
+
+static void BM_Matrix4fByVector(benchmark::State& state) {
+    Matrix4f m1 = systems::leal::vector_math::Matrix4f::identity();
+    Vector4f v1 = systems::leal::vector_math::Vector4f(1,2,3,4);
+    for (auto _ : state){
+        benchmark::DoNotOptimize(m1 * v1);
+    }
+}
+BENCHMARK(BM_Matrix4fByVector);
+
+static void BM_Matrix4fLookAt(benchmark::State& state) {
+    auto eye = systems::leal::vector_math::Vector3<float>(0,0,0);
+    auto target = systems::leal::vector_math::Vector3<float>(0,0,1000);
+    auto up = systems::leal::vector_math::Vector3<float>(0,1,0);
+    for (auto _ : state){
+        benchmark::DoNotOptimize(systems::leal::vector_math::Matrix4f::lookAt(eye, target, up));
+    }
+}
+BENCHMARK(BM_Matrix4fLookAt);
 
 ///////////////////////////
 // GLM Matrix4 benchmark //

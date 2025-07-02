@@ -24,7 +24,7 @@ namespace systems::leal::vector_math
         ///////////////
         // operators //
         ///////////////
-        Matrix4<DATA_TYPE> operator*(const Matrix4<DATA_TYPE> rhs) const;
+        Matrix4<DATA_TYPE> operator*(const Matrix4<DATA_TYPE> &rhs) const;
         Matrix4<DATA_TYPE> operator*(DATA_TYPE scalar) const;
         Vector4<DATA_TYPE> operator*(const Vector4<DATA_TYPE> &vector) const;
 
@@ -59,7 +59,7 @@ namespace systems::leal::vector_math
     }
 
     template <class DATA_TYPE>
-    Matrix4<DATA_TYPE> Matrix4<DATA_TYPE>::operator*(const Matrix4<DATA_TYPE> rhs) const {
+    Matrix4<DATA_TYPE> Matrix4<DATA_TYPE>::operator*(const Matrix4<DATA_TYPE> &rhs) const {
         auto toReturn = ((Mat<DATA_TYPE,4,4> *)this)->operator*(rhs);
         return *(Matrix4<DATA_TYPE> *)&toReturn;
     }
