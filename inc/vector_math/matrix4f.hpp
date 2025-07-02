@@ -1,6 +1,13 @@
 #pragma once
 
-#include <intrin.h>
+#if defined(__x86__) || defined(__x86_64__)    
+    // do x64 stuff   
+    #include <intrin.h>
+    #include <immintrin.h>
+#elif defined(__arm__) || defined(__arm64__)
+    // do arm stuff
+#endif  
+
 #include <vector_math/matrix4.hpp>
 #include <vector_math/vector4f.hpp>
 
@@ -29,18 +36,47 @@ namespace systems::leal::vector_math
     };
 
     Matrix4f Matrix4f::operator*(const Matrix4f &rhs) const {
-        //auto toReturn = ((Mat<float,4,4> *)this)->operator*(rhs);
+        #if defined(__x86__) || defined(__x86_64__)    
+            Matrix4f toReturn;
+            auto transposed = rhs.transpose();
+            alignas(float) float result[4];
 
-        Matrix4f toReturn;
-        auto transposed = rhs.transpose();
-        alignas(float) float result[4];
+            const float *plhs = this->data;
+            for (int c=0; c<4; c++) {
+                const float *prhs = transposed.data;
+                __m128 x = _mm_load_ps(plhs);
+                for (int r=0; r<4; r++) {
+                    __m128 y = _mm_load_ps(prhs);
+                    __m128 z =_mm_mul_ps(x,y);
+                    _mm_store_ps(result, z);
 
-        const float *plhs = this->data;
-        for (int c=0; c<4; c++) {
-            const float *prhs = transposed.data;
-            __m128 x = _mm_load_ps(plhs);
+                    float value=0;
+                    for (int e=0; e<4; e++) {
+                        value += result[e];
+                    }
+                    toReturn.data[4*r + c] = value;
+
+                    prhs += 4;
+                }
+                plhs += 4;
+            }
+            return toReturn;
+        #elif defined(__arm__) || defined(__arm64__)
+            auto toReturn = ((Matrix4<float> *)this)->operator*(rhs);
+            return *(Matrix4f *)&toReturn;
+        #endif  
+    }
+
+    Vector4f Matrix4f::operator*(const Vector4f &rhs) const {
+        #if defined(__x86__) || defined(__x86_64__)    
+            Vector4f toReturn;
+            alignas(float) float result[4];
+
+            const float *plhs = this->data;
+            const float *prhs = rhs.data;
+            __m128 y = _mm_load_ps(prhs);
             for (int r=0; r<4; r++) {
-                __m128 y = _mm_load_ps(prhs);
+                __m128 x = _mm_load_ps(plhs);
                 __m128 z =_mm_mul_ps(x,y);
                 _mm_store_ps(result, z);
 
@@ -48,56 +84,15 @@ namespace systems::leal::vector_math
                 for (int e=0; e<4; e++) {
                     value += result[e];
                 }
-                toReturn.data[4*r + c] = value;
+                toReturn.data[r] = value;
 
-                prhs += 4;
+                plhs += 4;
             }
-            plhs += 4;
-        }
-
-        //__m128 y = _mm_load_ps(rhs.data);
-        //__m128 z =_mm_mul_ps(x,y);
-        //__m256 z = _mm256_add_ps(x,y);
-
-        //alignas(float) float result[8];
-        //_mm256_store_ps(result, z);
-
-
-        return toReturn;
-    }
-
-    Vector4f Matrix4f::operator*(const Vector4f &rhs) const {
-        //auto toReturn = ((Mat<float,4,4> *)this)->operator*(rhs);
-
-        Vector4f toReturn;
-        alignas(float) float result[4];
-
-        const float *plhs = this->data;
-        const float *prhs = rhs.data;
-        __m128 y = _mm_load_ps(prhs);
-        for (int r=0; r<4; r++) {
-            __m128 x = _mm_load_ps(plhs);
-            __m128 z =_mm_mul_ps(x,y);
-            _mm_store_ps(result, z);
-
-            float value=0;
-            for (int e=0; e<4; e++) {
-                value += result[e];
-            }
-            toReturn.data[r] = value;
-
-            plhs += 4;
-        }
-
-        //__m128 y = _mm_load_ps(rhs.data);
-        //__m128 z =_mm_mul_ps(x,y);
-        //__m256 z = _mm256_add_ps(x,y);
-
-        //alignas(float) float result[8];
-        //_mm256_store_ps(result, z);
-
-
-        return toReturn;
+            return toReturn;
+        #elif defined(__arm__) || defined(__arm64__)
+            auto toReturn = ((Matrix4<float> *)this)->operator*(rhs);
+            return *(Vector4f *)&toReturn;
+        #endif
     }
 
     Matrix4f Matrix4f::identity()
