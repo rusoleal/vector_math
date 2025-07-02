@@ -49,11 +49,15 @@ if (VECTOR_MATH_BUILD_BENCHMARK)
     SET(BENCHMARK_DOWNLOAD_DEPENDENCIES ON CACHE BOOL "enable download dependencies")
     include(dependencies/benchmark.cmake)
 
+    # comparison against glm
+    include(dependencies/glm.cmake)
+
     add_executable(${PROJECT_NAME}_benchmark
         benchmark/main.cpp
     )
     target_link_libraries(${PROJECT_NAME}_benchmark
         ${PROJECT_NAME}
         benchmark::benchmark
+        glm::glm
     )
 endif()
