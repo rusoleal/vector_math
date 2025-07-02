@@ -43,6 +43,10 @@ TEST(Matrix4Float, mul) {
     EXPECT_EQ(Matrix4<float>::identity()*Matrix4<float>(1), Matrix4<float>(1));
 }
 
+TEST(Matrix4Float, transpose) {
+    EXPECT_EQ(Matrix4<float>::identity().transpose(), Matrix4<float>::identity());
+}
+
 TEST(Matrix4Double, constructors) {
     EXPECT_EQ(sizeof(Matrix4<double>), 128);
     EXPECT_EQ(Matrix4<double>::identity(), Matrix4<double>::identity());
@@ -57,6 +61,10 @@ TEST(Matrix4Double, sum) {
 
 TEST(Matrix4Double, mul) {
     EXPECT_EQ(Matrix4<double>::identity()*Matrix4<double>(1), Matrix4<double>(1));
+}
+
+TEST(Matrix4Double, transpose) {
+    EXPECT_EQ(Matrix4<double>::identity().transpose(), Matrix4<double>::identity());
 }
 
 int main(int argc, char **argv) {

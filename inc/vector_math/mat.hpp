@@ -40,6 +40,18 @@ namespace systems::leal::vector_math {
             return toReturn;
         }
 
+        Mat<DATA_TYPE,COLS,ROWS> transpose() const {
+            Mat<DATA_TYPE,COLS,ROWS> toReturn;
+
+            int ownIndex=0;
+            for (int a=0; a<COLS; a++)
+                for (int b=0; b<ROWS; b++) {
+                    toReturn.data[COLS*b + a] = this->data[ownIndex];
+                    ownIndex++;
+                }
+
+            return toReturn;
+        }
 
     };
 

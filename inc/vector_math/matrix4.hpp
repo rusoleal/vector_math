@@ -42,6 +42,7 @@ namespace systems::leal::vector_math
         static Matrix4<DATA_TYPE> rotateX(DATA_TYPE angle);
         static Matrix4<DATA_TYPE> rotateY(DATA_TYPE angle);
         static Matrix4<DATA_TYPE> rotateZ(DATA_TYPE angle);
+        
 
     };
 
