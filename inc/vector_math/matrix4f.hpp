@@ -10,11 +10,11 @@
     #define __VECTOR_MATH_ARCH_ARM
 #endif
 
-#if defined(__x86__) || defined(__x86_64__)    
+#ifdef __VECTOR_MATH_ARCH_X86_X64
     // do x64 stuff   
     #include <intrin.h>
     #include <immintrin.h>
-#elif defined(__arm__) || defined(__arm64__)
+#elif defined(__VECTOR_MATH_ARCH_ARM)
     // do arm stuff
 #endif  
 
@@ -71,7 +71,7 @@ namespace systems::leal::vector_math
                 plhs += 4;
             }
             return toReturn;
-        #elif __VECTOR_MATH_ARCH_ARM
+        #elif defined(__VECTOR_MATH_ARCH_ARM)
             auto toReturn = ((Matrix4<float> *)this)->operator*(rhs);
             return *(Matrix4f *)&toReturn;
         #endif  
@@ -99,7 +99,7 @@ namespace systems::leal::vector_math
                 plhs += 4;
             }
             return toReturn;
-        #elif __VECTOR_MATH_ARCH_ARM
+        #elif defined(__VECTOR_MATH_ARCH_ARM)
             auto toReturn = ((Matrix4<float> *)this)->operator*(rhs);
             return *(Vector4f *)&toReturn;
         #endif
