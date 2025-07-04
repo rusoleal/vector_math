@@ -4,7 +4,7 @@
 
 namespace systems::leal::vector_math {
 
-    class Vector4f:public Vector4<float> {
+    class alignas(16) Vector4f:public Vector4<float> {
     public:
         Vector4f() = default;
         Vector4f(float x, float y, float z, float w) {

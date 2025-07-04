@@ -12,7 +12,7 @@
 
 #ifdef __VECTOR_MATH_ARCH_X86_X64
     // do x64 stuff   
-    #include <intrin.h>
+    //#include <intrin.h>
     #include <immintrin.h>
 #elif defined(__VECTOR_MATH_ARCH_ARM)
     // do arm stuff
@@ -23,7 +23,7 @@
 
 namespace systems::leal::vector_math
 {
-    class alignas(float) Matrix4f : public Matrix4<float> {
+    class alignas(16) Matrix4f : public Matrix4<float> {
     public:
         //////////////////
         // constructors //
@@ -47,6 +47,7 @@ namespace systems::leal::vector_math
 
     Matrix4f Matrix4f::operator*(const Matrix4f &rhs) const {
         #ifdef __VECTOR_MATH_ARCH_X86_X64
+            //printf("1\n");
             Matrix4f toReturn;
             __m128 row1 = _mm_load_ps(&rhs.data[0]);
             __m128 row2 = _mm_load_ps(&rhs.data[4]);
