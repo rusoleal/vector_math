@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector_math/matrix4.hpp>
+#include <vector_math/matrix4f.hpp>
 
 namespace systems::leal::vector_math {
 

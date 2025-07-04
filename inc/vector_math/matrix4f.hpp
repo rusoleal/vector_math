@@ -48,6 +48,26 @@ namespace systems::leal::vector_math
     Matrix4f Matrix4f::operator*(const Matrix4f &rhs) const {
         #ifdef __VECTOR_MATH_ARCH_X86_X64
             Matrix4f toReturn;
+            __m128 row1 = _mm_load_ps(&rhs.data[0]);
+            __m128 row2 = _mm_load_ps(&rhs.data[4]);
+            __m128 row3 = _mm_load_ps(&rhs.data[8]);
+            __m128 row4 = _mm_load_ps(&rhs.data[12]);
+            for(int i=0; i<4; i++) {
+                __m128 brod1 = _mm_set1_ps(this->data[4*i + 0]);
+                __m128 brod2 = _mm_set1_ps(this->data[4*i + 1]);
+                __m128 brod3 = _mm_set1_ps(this->data[4*i + 2]);
+                __m128 brod4 = _mm_set1_ps(this->data[4*i + 3]);
+                __m128 row = _mm_add_ps(
+                            _mm_add_ps(
+                                _mm_mul_ps(brod1, row1),
+                                _mm_mul_ps(brod2, row2)),
+                            _mm_add_ps(
+                                _mm_mul_ps(brod3, row3),
+                                _mm_mul_ps(brod4, row4)));
+                _mm_store_ps(&toReturn.data[4*i], row);
+            }
+            return toReturn;        
+            /*Matrix4f toReturn;
             auto transposed = rhs.transpose();
             alignas(float) float result[4];
 
@@ -70,7 +90,8 @@ namespace systems::leal::vector_math
                 }
                 plhs += 4;
             }
-            return toReturn;
+            return toReturn;*/
+
         #elif defined(__VECTOR_MATH_ARCH_ARM)
             auto toReturn = ((Matrix4<float> *)this)->operator*(rhs);
             return *(Matrix4f *)&toReturn;
@@ -80,6 +101,38 @@ namespace systems::leal::vector_math
     Vector4f Matrix4f::operator*(const Vector4f &rhs) const {
         #ifdef __VECTOR_MATH_ARCH_X86_X64
             Vector4f toReturn;
+            __m128 row1 = _mm_load_ps(&this->data[0]);
+            __m128 row2 = _mm_load_ps(&this->data[4]);
+            __m128 row3 = _mm_load_ps(&this->data[8]);
+            __m128 row4 = _mm_load_ps(&this->data[12]);
+            __m128 vector = _mm_load_ps(rhs.data);
+            __m128 r1 = _mm_mul_ps(row1, vector);
+            __m128 r2 = _mm_mul_ps(row2, vector);
+            __m128 r3 = _mm_mul_ps(row3, vector);
+            __m128 r4 = _mm_mul_ps(row4, vector);
+            __m128 result = _mm_hadd_ps(
+                _mm_hadd_ps(r1,r2),
+                _mm_hadd_ps(r3,r4)
+            );
+            _mm_store_ps(toReturn.data, result);
+
+            /*__m128 brod1 = _mm_set1_ps(rhs.data[0]);
+            __m128 brod2 = _mm_set1_ps(rhs.data[1]);
+            __m128 brod3 = _mm_set1_ps(rhs.data[2]);
+            __m128 brod4 = _mm_set1_ps(rhs.data[3]);
+            __m128 row = _mm_add_ps(
+                        _mm_add_ps(
+                            _mm_mul_ps(brod1, row1),
+                            _mm_mul_ps(brod2, row2)),
+                        _mm_add_ps(
+                            _mm_mul_ps(brod3, row3),
+                            _mm_mul_ps(brod4, row4)));
+            _mm_store_ps(toReturn.data, row);
+            printf("vector: %f %f %f %f\n", toReturn.data[0], toReturn.data[1], toReturn.data[2], toReturn.data[3]);
+            */
+            return toReturn;        
+
+            /*Vector4f toReturn;
             alignas(float) float result[4];
 
             const float *plhs = this->data;
@@ -98,7 +151,7 @@ namespace systems::leal::vector_math
 
                 plhs += 4;
             }
-            return toReturn;
+            return toReturn;*/
         #elif defined(__VECTOR_MATH_ARCH_ARM)
             auto toReturn = ((Matrix4<float> *)this)->operator*(rhs);
             return *(Vector4f *)&toReturn;

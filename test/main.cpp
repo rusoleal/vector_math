@@ -40,7 +40,16 @@ TEST(Matrix4Float, sum) {
 }
 
 TEST(Matrix4Float, mul) {
-    EXPECT_EQ(Matrix4<float>::identity()*Matrix4<float>(1), Matrix4<float>(1));
+    float m1[16] = {1,2,3,4,0,1,2,3,5,6,7,8,10,11,12,13};
+    float m2[16] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};
+    float m3[16] = {80,90,100,110,56,62,68,74,176,202,228,254,296,342,388,434};
+
+    EXPECT_EQ(Matrix4<float>(m1)*Matrix4<float>(m2), Matrix4<float>(m3));
+    EXPECT_EQ(Matrix4f(m1)*Matrix4f(m2), Matrix4f(m3));
+
+    EXPECT_EQ(Matrix4<float>(m1)*Vector4<float>(2,6,10,14), Vector4<float>(100,68,228,388));
+    EXPECT_EQ(Matrix4f(m1)*Vector4f(2,6,10,14), Vector4f(100,68,228,388));
+
 }
 
 TEST(Matrix4Float, transpose) {
