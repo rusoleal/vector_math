@@ -2,7 +2,7 @@
 
 #include <vector_math/common.hpp>
 #include <vector_math/matrix4.hpp>
-#include <vector_math/vector4f.hpp>
+#include <vector_math/vector4d.hpp>
 
 #ifdef __VECTOR_MATH_ARCH_X86_X64
     #include <immintrin.h>
@@ -12,25 +12,25 @@
 
 namespace systems::leal::vector_math
 {
-    class alignas(16) Matrix4f : public Matrix4<float> {
+    class alignas(32) Matrix4d : public Matrix4<double> {
     public:
         //////////////////
         // constructors //
         //////////////////
-        Matrix4f();
-        Matrix4f(float value);
-        Matrix4f(float buffer[16]);
+        Matrix4d();
+        Matrix4d(double value);
+        Matrix4d(double buffer[16]);
 
         ///////////////
         // operators //
         ///////////////
-        Matrix4f operator*(const Matrix4f &rhs) const;
-        Vector4f operator*(const Vector4f &rhs) const;
+        Matrix4d operator*(const Matrix4d &rhs) const;
+        Vector4d operator*(const Vector4d &rhs) const;
 
         /////////////
         // statics //
         /////////////
-        static Matrix4f identity();
+        static Matrix4d identity();
 
     };
 }

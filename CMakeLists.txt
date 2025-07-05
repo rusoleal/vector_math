@@ -6,16 +6,33 @@ configure_file(src/vector_math_config.h.in vector_math_config.h)
 
 set(CMAKE_CXX_STANDARD 17)
 
+message(STATUS ${CMAKE_SYSTEM_PROCESSOR})
+
+# enable avx simd extension for x86 processor family
+if (CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)|(x86_64)")
+    message(STATUS "Enabling AVX support")
+    if(MSVC AND NOT MSVC_VERSION LESS 1600)
+        message(STATUS "Enabling AVX support for MSVC")
+        set( CMAKE_CXX_FLAGS "/arch:AVX")
+    else()
+        message(STATUS "Enabling AVX support for gcc/clang")
+        set( CMAKE_CXX_FLAGS "-mavx")
+    endif()
+else ()
+endif ()
+
 option(VECTOR_MATH_BUILD_TEST "Enable building tests" OFF)
 
 option(VECTOR_MATH_BUILD_BENCHMARK "Enable building benchmark" OFF)
 
 include_directories(inc)
 
-message(STATUS ${PROJECT_NAME})
+message(STATUS "Building ${PROJECT_NAME}...")
 
 add_library(${PROJECT_NAME}
     src/vector_math.cpp
+    src/matrix4f.cpp
+    src/matrix4d.cpp
 )
 
 target_include_directories (vector_math PUBLIC 
