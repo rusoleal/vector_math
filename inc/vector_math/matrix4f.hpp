@@ -1,14 +1,7 @@
 #pragma once
 
-#include <vector_math/common.hpp>
 #include <vector_math/matrix4.hpp>
 #include <vector_math/vector4f.hpp>
-
-#ifdef __VECTOR_MATH_ARCH_X86_X64
-    #include <immintrin.h>
-#elif defined(__VECTOR_MATH_ARCH_ARM)
-#endif  
-
 
 namespace systems::leal::vector_math
 {

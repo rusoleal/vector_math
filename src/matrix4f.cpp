@@ -1,4 +1,11 @@
 #include <vector_math/matrix4f.hpp>
+#include <vector_math/common.hpp>
+
+#ifdef __VECTOR_MATH_ARCH_X86_X64
+    #include <immintrin.h>
+#elif defined(__VECTOR_MATH_ARCH_ARM)
+    #include <arm_neon.h>
+#endif  
 
 using namespace systems::leal::vector_math;
 
@@ -35,8 +42,47 @@ Matrix4f Matrix4f::operator*(const Matrix4f &rhs) const {
         }
         return toReturn;        
     #elif defined(__VECTOR_MATH_ARCH_ARM)
-        auto toReturn = ((Matrix4<float> *)this)->operator*(rhs);
-        return *(Matrix4f *)&toReturn;
+        Matrix4f toReturn;
+        float32x4_t A0 = vld1q_f32(this->data);
+        float32x4_t A1 = vld1q_f32(this->data+4);
+        float32x4_t A2 = vld1q_f32(this->data+8);
+        float32x4_t A3 = vld1q_f32(this->data+12);
+
+        float32x4_t C0 = vmovq_n_f32(0);
+        float32x4_t C1 = vmovq_n_f32(0);
+        float32x4_t C2 = vmovq_n_f32(0);
+        float32x4_t C3 = vmovq_n_f32(0);        
+
+        float32x4_t B0 = vld1q_f32(rhs.data);
+        C0 = vfmaq_laneq_f32(C0, A0, B0, 0);
+        C0 = vfmaq_laneq_f32(C0, A1, B0, 1);
+        C0 = vfmaq_laneq_f32(C0, A2, B0, 2);
+        C0 = vfmaq_laneq_f32(C0, A3, B0, 3);
+        vst1q_f32(toReturn.data, C0);
+
+        float32x4_t B1 = vld1q_f32(rhs.data+4);
+        C1 = vfmaq_laneq_f32(C1, A0, B1, 0);
+        C1 = vfmaq_laneq_f32(C1, A1, B1, 1);
+        C1 = vfmaq_laneq_f32(C1, A2, B1, 2);
+        C1 = vfmaq_laneq_f32(C1, A3, B1, 3);
+        vst1q_f32(toReturn.data+4, C1);
+        
+        float32x4_t B2 = vld1q_f32(rhs.data+8);
+        C2 = vfmaq_laneq_f32(C2, A0, B2, 0);
+        C2 = vfmaq_laneq_f32(C2, A1, B2, 1);
+        C2 = vfmaq_laneq_f32(C2, A2, B2, 2);
+        C2 = vfmaq_laneq_f32(C2, A3, B2, 3);
+        vst1q_f32(toReturn.data+8, C2);
+        
+        float32x4_t B3 = vld1q_f32(rhs.data+12);
+        C3 = vfmaq_laneq_f32(C3, A0, B3, 0);
+        C3 = vfmaq_laneq_f32(C3, A1, B3, 1);
+        C3 = vfmaq_laneq_f32(C3, A2, B3, 2);
+        C3 = vfmaq_laneq_f32(C3, A3, B3, 3);
+        vst1q_f32(toReturn.data+12, C3);
+
+        //auto toReturn = ((Matrix4<float> *)this)->operator*(rhs);
+        return toReturn;
     #endif  
 }
 
