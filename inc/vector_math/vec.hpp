@@ -35,9 +35,14 @@ namespace systems::leal::vector_math
         Vec<DATA_TYPE, SIZE> operator+(const Vec<DATA_TYPE, SIZE> &other) const;
         Vec<DATA_TYPE, SIZE> operator-(const Vec<DATA_TYPE, SIZE> &other) const;
         Vec<DATA_TYPE, SIZE> operator*(DATA_TYPE scalar) const;
-        friend Vec<DATA_TYPE, SIZE> operator*(DATA_TYPE scalar, const Vec<DATA_TYPE, SIZE> &lhs);
+        friend Vec<DATA_TYPE, SIZE> operator*(DATA_TYPE scalar, const Vec<DATA_TYPE, SIZE> &lhs)
+        {
+            Vec<DATA_TYPE, SIZE> toReturn;
+            for (uint32_t a = 0; a < SIZE; a++)
+                toReturn.data[a] = lhs.data[a] * scalar;
+            return toReturn;
+        }
         Vec<DATA_TYPE, SIZE> operator/(DATA_TYPE scalar) const;
-        friend Vec<DATA_TYPE, SIZE> operator/(const Vec<DATA_TYPE, SIZE> &lhs, DATA_TYPE scalar);
         Vec<DATA_TYPE, SIZE> operator-() const;
 
         /////////////
@@ -119,34 +124,12 @@ namespace systems::leal::vector_math
     }
 
     template <class DATA_TYPE, uint32_t SIZE>
-    Vec<DATA_TYPE, SIZE> operator*(DATA_TYPE scalar, const Vec<DATA_TYPE, SIZE> &lhs)
-    {
-        Vec<DATA_TYPE, SIZE> toReturn;
-        for (uint32_t a = 0; a < lhs.Size; a++)
-        {
-            toReturn.data[a] = lhs.data[a] * scalar;
-        }
-        return toReturn;
-    }
-
-    template <class DATA_TYPE, uint32_t SIZE>
     Vec<DATA_TYPE, SIZE> Vec<DATA_TYPE, SIZE>::operator/(DATA_TYPE scalar) const
     {
         Vec<DATA_TYPE, SIZE> toReturn;
         for (uint32_t a = 0; a < this->Size; a++)
         {
             toReturn.data[a] = data[a] / scalar;
-        }
-        return toReturn;
-    }
-
-    template <class DATA_TYPE, uint32_t SIZE>
-    Vec<DATA_TYPE, SIZE> operator/(const Vec<DATA_TYPE, SIZE> &lhs, DATA_TYPE scalar)
-    {
-        Vec<DATA_TYPE, SIZE> toReturn;
-        for (uint32_t a = 0; a < lhs.Size; a++)
-        {
-            toReturn.data[a] = lhs.data[a] / scalar;
         }
         return toReturn;
     }

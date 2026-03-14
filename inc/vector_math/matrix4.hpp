@@ -127,7 +127,7 @@ namespace systems::leal::vector_math
     template <class DATA_TYPE>
     Matrix4<DATA_TYPE> Matrix4<DATA_TYPE>::perspective(DATA_TYPE fov, DATA_TYPE aspectRatio, DATA_TYPE znear, DATA_TYPE zfar)
     {
-        auto toReturn = Matrix4<DATA_TYPE>(0);
+        auto toReturn = Matrix4<DATA_TYPE>(DATA_TYPE(0));
         auto yScale = DATA_TYPE(1.0) / tan(fov * DATA_TYPE(0.5));
         auto q = zfar / (zfar - znear);
 
@@ -146,7 +146,7 @@ namespace systems::leal::vector_math
         DATA_TYPE halfWidth = width * DATA_TYPE(0.5);
         DATA_TYPE halfHeight = height * DATA_TYPE(0.5);
 
-        return Matrix4<DATA_TYPE>::CreateOrthoOffCenter(-halfWidth, halfWidth, -halfHeight, halfHeight, znear, zfar);
+        return Matrix4<DATA_TYPE>::orthoOffCenter(-halfWidth, halfHeight, halfWidth, -halfHeight, znear, zfar);
     }
 
     template <class DATA_TYPE>
@@ -179,7 +179,7 @@ namespace systems::leal::vector_math
     template <class DATA_TYPE>
     Matrix4<DATA_TYPE> Matrix4<DATA_TYPE>::scale(const Vector3<DATA_TYPE> scale)
     {
-        auto toReturn = Matrix4<DATA_TYPE>(0);
+        auto toReturn = Matrix4<DATA_TYPE>(DATA_TYPE(0));
         toReturn.data[0] = scale.data[0];
         toReturn.data[5] = scale.data[1];
         toReturn.data[10] = scale.data[2];

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22.1)
 
-project(vector_math VERSION 0.0.2)
+project(vector_math VERSION 0.1.0)
 
 configure_file(src/vector_math_config.h.in vector_math_config.h)
 
