@@ -9,40 +9,138 @@
 namespace systems::leal::vector_math
 {
 
+    /// 4×4 matrix of type @p DATA_TYPE stored in row-major order.
+    ///
+    /// Element at row @p r, column @p c is `data[r*4 + c]`.
+    /// Uses the column-vector convention: `result = M * v` (vector on the right).
+    /// Translation occupies the last column: `data[3]`=tx, `data[7]`=ty, `data[11]`=tz.
+    ///
+    /// Inherits Mat<DATA_TYPE,4,4> (generic multiply, transpose) and all Vec utilities.
     template <class DATA_TYPE>
     class Matrix4 : public Mat<DATA_TYPE, 4, 4>
     {
     public:
 
-        //////////////////
-        // constructors //
-        //////////////////
+        // ── Constructors ──────────────────────────────────────────────────────
+
+        /// Default-constructs all elements to zero.
         Matrix4();
+
+        /// Constructs all elements from a single @p value.
         Matrix4(DATA_TYPE value);
+
+        /// Constructs from a 16-element row-major C array.
         Matrix4(DATA_TYPE buffer[16]);
 
-        ///////////////
-        // operators //
-        ///////////////
+        // ── Operators ─────────────────────────────────────────────────────────
+
+        /// Matrix–matrix multiplication.
         Matrix4<DATA_TYPE> operator*(const Matrix4<DATA_TYPE> &rhs) const;
+
+        /// Scalar multiplication: scales every element.
         Matrix4<DATA_TYPE> operator*(DATA_TYPE scalar) const;
+
+        /// Matrix–vector multiplication (column vector on right, returns Vector4).
         Vector4<DATA_TYPE> operator*(const Vector4<DATA_TYPE> &vector) const;
 
-        /////////////
-        // statics //
-        /////////////
+        /// Component-wise addition.
+        Matrix4<DATA_TYPE> operator+(const Matrix4<DATA_TYPE>& rhs) const;
+
+        /// Component-wise subtraction.
+        Matrix4<DATA_TYPE> operator-(const Matrix4<DATA_TYPE>& rhs) const;
+
+        /// Negation: returns `-(*this)` element-wise.
+        Matrix4<DATA_TYPE> operator-() const;
+
+        // ── Static factories ──────────────────────────────────────────────────
+
+        /// Returns a 4×4 identity matrix.
         static Matrix4<DATA_TYPE> identity();
+
+        /// Builds a right-handed view matrix looking from @p eye toward @p target with @p up as the up direction.
         static Matrix4<DATA_TYPE> lookAt(const Vector3<DATA_TYPE> &eye, const Vector3<DATA_TYPE> &target, const Vector3<DATA_TYPE> &up);
+
+        /// Builds a perspective projection matrix.
+        /// @param fov          Vertical field of view in radians.
+        /// @param aspectRatio  Width / height.
+        /// @param znear        Distance to the near plane (positive).
+        /// @param zfar         Distance to the far plane (positive, > znear).
         static Matrix4<DATA_TYPE> perspective(DATA_TYPE fov, DATA_TYPE aspectRatio, DATA_TYPE znear, DATA_TYPE zfar);
+
+        /// Builds a symmetric orthographic projection matrix centered on the origin.
+        /// @param width   Total width of the view volume.
+        /// @param height  Total height of the view volume.
         static Matrix4<DATA_TYPE> ortho(DATA_TYPE width, DATA_TYPE height, DATA_TYPE znear, DATA_TYPE zfar);
+
+        /// Builds an off-center orthographic projection matrix.
         static Matrix4<DATA_TYPE> orthoOffCenter(DATA_TYPE left, DATA_TYPE top, DATA_TYPE right, DATA_TYPE bottom, DATA_TYPE znear, DATA_TYPE zfar);
+
+        /// Builds a translation matrix from a Vector3 offset.
         static Matrix4<DATA_TYPE> translate(const Vector3<DATA_TYPE> translation);
+
+        /// Builds a non-uniform scale matrix.
         static Matrix4<DATA_TYPE> scale(const Vector3<DATA_TYPE> scale);
+
+        /// Builds a rotation matrix from a unit quaternion.
         static Matrix4<DATA_TYPE> rotate(const Quaternion<DATA_TYPE> &rotation);
+
+        /// Builds a rotation matrix around the X axis by @p angle radians.
         static Matrix4<DATA_TYPE> rotateX(DATA_TYPE angle);
+
+        /// Builds a rotation matrix around the Y axis by @p angle radians.
         static Matrix4<DATA_TYPE> rotateY(DATA_TYPE angle);
+
+        /// Builds a rotation matrix around the Z axis by @p angle radians.
         static Matrix4<DATA_TYPE> rotateZ(DATA_TYPE angle);
-        
+
+        /// Builds a combined TRS (Translate–Rotate–Scale) matrix.
+        /// Equivalent to `translate(t) * rotate(r) * scale(s)`.
+        static Matrix4<DATA_TYPE> compose(const Vector3<DATA_TYPE>& translation, const Quaternion<DATA_TYPE>& rotation, const Vector3<DATA_TYPE>& scaleVec);
+
+        // ── Methods ───────────────────────────────────────────────────────────
+
+        /// Returns the sum of the diagonal elements (M[0][0] + M[1][1] + M[2][2] + M[3][3]).
+        DATA_TYPE trace() const;
+
+        /// Returns the determinant of this matrix.
+        DATA_TYPE determinant() const;
+
+        /// Inverts this matrix in-place.
+        /// @return true on success; false if the matrix is singular (no-op in that case).
+        bool invert();
+
+        /// Returns an inverted copy. Returns an unchanged copy if the matrix is singular.
+        Matrix4<DATA_TYPE> inverted() const;
+
+        /// Returns row @p row (0–3) as a Vector4.
+        Vector4<DATA_TYPE> getRow(int row) const;
+
+        /// Writes @p v into row @p row (0–3).
+        void setRow(int row, const Vector4<DATA_TYPE>& v);
+
+        /// Returns column @p col (0–3) as a Vector4.
+        Vector4<DATA_TYPE> getColumn(int col) const;
+
+        /// Writes @p v into column @p col (0–3).
+        void setColumn(int col, const Vector4<DATA_TYPE>& v);
+
+        /// Extracts the translation from the last column (data[3], data[7], data[11]).
+        Vector3<DATA_TYPE> getTranslation() const;
+
+        /// Writes @p t into the last column (data[3], data[7], data[11]).
+        void setTranslation(const Vector3<DATA_TYPE>& t);
+
+        /// Extracts per-axis scale factors as the lengths of the three basis columns.
+        /// Valid only for pure TRS matrices (no shear).
+        Vector3<DATA_TYPE> getScale() const;
+
+        /// Transforms a 3D point by this matrix: sets w=1, multiplies, returns xyz.
+        /// Applies the full TRS transform including translation.
+        Vector3<DATA_TYPE> transform3(const Vector3<DATA_TYPE>& v) const;
+
+        /// Transforms a 3D direction by this matrix: sets w=0, multiplies, returns xyz.
+        /// Applies only rotation and scale — translation is ignored.
+        Vector3<DATA_TYPE> rotate3(const Vector3<DATA_TYPE>& v) const;
 
     };
 
@@ -216,40 +314,228 @@ namespace systems::leal::vector_math
     template <class DATA_TYPE>
     Matrix4<DATA_TYPE> Matrix4<DATA_TYPE>::rotateX(DATA_TYPE angle)
     {
-        DATA_TYPE cos = cos(angle);
-        DATA_TYPE sin = sin(angle);
+        DATA_TYPE cosA = std::cos(angle);
+        DATA_TYPE sinA = std::sin(angle);
         auto toReturn = Matrix4<DATA_TYPE>::identity();
-        toReturn.data[5] = cos;
-        toReturn.data[6] = sin;
-        toReturn.data[9] = -sin;
-        toReturn.data[10] = cos;
+        toReturn.data[5] = cosA;
+        toReturn.data[6] = sinA;
+        toReturn.data[9] = -sinA;
+        toReturn.data[10] = cosA;
         return toReturn;
     }
 
     template <class DATA_TYPE>
     Matrix4<DATA_TYPE> Matrix4<DATA_TYPE>::rotateY(DATA_TYPE angle)
     {
-        DATA_TYPE cos = cos(angle);
-        DATA_TYPE sin = sin(angle);
+        DATA_TYPE cosA = std::cos(angle);
+        DATA_TYPE sinA = std::sin(angle);
         auto toReturn = Matrix4<DATA_TYPE>::identity();
-        toReturn.data[0] = cos;
-        toReturn.data[2] = -sin;
-        toReturn.data[8] = sin;
-        toReturn.data[10] = cos;
+        toReturn.data[0] = cosA;
+        toReturn.data[2] = -sinA;
+        toReturn.data[8] = sinA;
+        toReturn.data[10] = cosA;
         return toReturn;
     }
 
     template <class DATA_TYPE>
     Matrix4<DATA_TYPE> Matrix4<DATA_TYPE>::rotateZ(DATA_TYPE angle)
     {
-        DATA_TYPE cos = cos(angle);
-        DATA_TYPE sin = sin(angle);
+        DATA_TYPE cosA = std::cos(angle);
+        DATA_TYPE sinA = std::sin(angle);
         auto toReturn = Matrix4<DATA_TYPE>::identity();
-        toReturn.data[0] = cos;
-        toReturn.data[2] = -sin;
-        toReturn.data[8] = sin;
-        toReturn.data[10] = cos;
+        toReturn.data[0] = cosA;
+        toReturn.data[1] = sinA;
+        toReturn.data[4] = -sinA;
+        toReturn.data[5] = cosA;
         return toReturn;
+    }
+
+    template <class DATA_TYPE>
+    Matrix4<DATA_TYPE> Matrix4<DATA_TYPE>::compose(const Vector3<DATA_TYPE>& translation, const Quaternion<DATA_TYPE>& rotation, const Vector3<DATA_TYPE>& scaleVec)
+    {
+        auto result = Matrix4<DATA_TYPE>::rotate(rotation);
+        // Scale columns 0, 1, 2 by scaleVec components
+        result.data[0] *= scaleVec.data[0]; result.data[1] *= scaleVec.data[1]; result.data[2]  *= scaleVec.data[2];
+        result.data[4] *= scaleVec.data[0]; result.data[5] *= scaleVec.data[1]; result.data[6]  *= scaleVec.data[2];
+        result.data[8] *= scaleVec.data[0]; result.data[9] *= scaleVec.data[1]; result.data[10] *= scaleVec.data[2];
+        result.data[3]  = translation.data[0];
+        result.data[7]  = translation.data[1];
+        result.data[11] = translation.data[2];
+        return result;
+    }
+
+    template <class DATA_TYPE>
+    Matrix4<DATA_TYPE> Matrix4<DATA_TYPE>::operator+(const Matrix4<DATA_TYPE>& rhs) const
+    {
+        Matrix4<DATA_TYPE> result;
+        for (int i = 0; i < 16; i++)
+            result.data[i] = this->data[i] + rhs.data[i];
+        return result;
+    }
+
+    template <class DATA_TYPE>
+    Matrix4<DATA_TYPE> Matrix4<DATA_TYPE>::operator-(const Matrix4<DATA_TYPE>& rhs) const
+    {
+        Matrix4<DATA_TYPE> result;
+        for (int i = 0; i < 16; i++)
+            result.data[i] = this->data[i] - rhs.data[i];
+        return result;
+    }
+
+    template <class DATA_TYPE>
+    Matrix4<DATA_TYPE> Matrix4<DATA_TYPE>::operator-() const
+    {
+        Matrix4<DATA_TYPE> result;
+        for (int i = 0; i < 16; i++)
+            result.data[i] = -this->data[i];
+        return result;
+    }
+
+    template <class DATA_TYPE>
+    DATA_TYPE Matrix4<DATA_TYPE>::trace() const
+    {
+        return this->data[0] + this->data[5] + this->data[10] + this->data[15];
+    }
+
+    template <class DATA_TYPE>
+    DATA_TYPE Matrix4<DATA_TYPE>::determinant() const
+    {
+        const DATA_TYPE* m = this->data;
+        DATA_TYPE b00 = m[10]*m[15] - m[11]*m[14];
+        DATA_TYPE b01 = m[9]*m[15]  - m[11]*m[13];
+        DATA_TYPE b02 = m[9]*m[14]  - m[10]*m[13];
+        DATA_TYPE b03 = m[8]*m[15]  - m[11]*m[12];
+        DATA_TYPE b04 = m[8]*m[14]  - m[10]*m[12];
+        DATA_TYPE b05 = m[8]*m[13]  - m[9]*m[12];
+        return m[0]*(m[5]*b00 - m[6]*b01 + m[7]*b02)
+             - m[1]*(m[4]*b00 - m[6]*b03 + m[7]*b04)
+             + m[2]*(m[4]*b01 - m[5]*b03 + m[7]*b05)
+             - m[3]*(m[4]*b02 - m[5]*b04 + m[6]*b05);
+    }
+
+    template <class DATA_TYPE>
+    bool Matrix4<DATA_TYPE>::invert()
+    {
+        const DATA_TYPE* m = this->data;
+        DATA_TYPE b00 = m[0]*m[5]   - m[1]*m[4];
+        DATA_TYPE b01 = m[0]*m[6]   - m[2]*m[4];
+        DATA_TYPE b02 = m[0]*m[7]   - m[3]*m[4];
+        DATA_TYPE b03 = m[1]*m[6]   - m[2]*m[5];
+        DATA_TYPE b04 = m[1]*m[7]   - m[3]*m[5];
+        DATA_TYPE b05 = m[2]*m[7]   - m[3]*m[6];
+        DATA_TYPE b06 = m[8]*m[13]  - m[9]*m[12];
+        DATA_TYPE b07 = m[8]*m[14]  - m[10]*m[12];
+        DATA_TYPE b08 = m[8]*m[15]  - m[11]*m[12];
+        DATA_TYPE b09 = m[9]*m[14]  - m[10]*m[13];
+        DATA_TYPE b10 = m[9]*m[15]  - m[11]*m[13];
+        DATA_TYPE b11 = m[10]*m[15] - m[11]*m[14];
+
+        DATA_TYPE det = b00*b11 - b01*b10 + b02*b09 + b03*b08 - b04*b07 + b05*b06;
+        if (isZero<DATA_TYPE>(det)) return false;
+        DATA_TYPE inv = DATA_TYPE(1) / det;
+
+        DATA_TYPE n[16];
+        for (int i = 0; i < 16; i++) n[i] = m[i];
+
+        this->data[0]  = ( n[5]*b11  - n[6]*b10  + n[7]*b09)  * inv;
+        this->data[1]  = (-n[1]*b11  + n[2]*b10  - n[3]*b09)  * inv;
+        this->data[2]  = ( n[13]*b05 - n[14]*b04 + n[15]*b03) * inv;
+        this->data[3]  = (-n[9]*b05  + n[10]*b04 - n[11]*b03) * inv;
+        this->data[4]  = (-n[4]*b11  + n[6]*b08  - n[7]*b07)  * inv;
+        this->data[5]  = ( n[0]*b11  - n[2]*b08  + n[3]*b07)  * inv;
+        this->data[6]  = (-n[12]*b05 + n[14]*b02 - n[15]*b01) * inv;
+        this->data[7]  = ( n[8]*b05  - n[10]*b02 + n[11]*b01) * inv;
+        this->data[8]  = ( n[4]*b10  - n[5]*b08  + n[7]*b06)  * inv;
+        this->data[9]  = (-n[0]*b10  + n[1]*b08  - n[3]*b06)  * inv;
+        this->data[10] = ( n[12]*b04 - n[13]*b02 + n[15]*b00) * inv;
+        this->data[11] = (-n[8]*b04  + n[9]*b02  - n[11]*b00) * inv;
+        this->data[12] = (-n[4]*b09  + n[5]*b07  - n[6]*b06)  * inv;
+        this->data[13] = ( n[0]*b09  - n[1]*b07  + n[2]*b06)  * inv;
+        this->data[14] = (-n[12]*b03 + n[13]*b01 - n[14]*b00) * inv;
+        this->data[15] = ( n[8]*b03  - n[9]*b01  + n[10]*b00) * inv;
+        return true;
+    }
+
+    template <class DATA_TYPE>
+    Matrix4<DATA_TYPE> Matrix4<DATA_TYPE>::inverted() const
+    {
+        auto result = *this;
+        result.invert();
+        return result;
+    }
+
+    template <class DATA_TYPE>
+    Vector4<DATA_TYPE> Matrix4<DATA_TYPE>::getRow(int row) const
+    {
+        return Vector4<DATA_TYPE>(
+            this->data[row*4], this->data[row*4+1],
+            this->data[row*4+2], this->data[row*4+3]
+        );
+    }
+
+    template <class DATA_TYPE>
+    void Matrix4<DATA_TYPE>::setRow(int row, const Vector4<DATA_TYPE>& v)
+    {
+        this->data[row*4]   = v.data[0];
+        this->data[row*4+1] = v.data[1];
+        this->data[row*4+2] = v.data[2];
+        this->data[row*4+3] = v.data[3];
+    }
+
+    template <class DATA_TYPE>
+    Vector4<DATA_TYPE> Matrix4<DATA_TYPE>::getColumn(int col) const
+    {
+        return Vector4<DATA_TYPE>(
+            this->data[col], this->data[4+col],
+            this->data[8+col], this->data[12+col]
+        );
+    }
+
+    template <class DATA_TYPE>
+    void Matrix4<DATA_TYPE>::setColumn(int col, const Vector4<DATA_TYPE>& v)
+    {
+        this->data[col]    = v.data[0];
+        this->data[4+col]  = v.data[1];
+        this->data[8+col]  = v.data[2];
+        this->data[12+col] = v.data[3];
+    }
+
+    template <class DATA_TYPE>
+    Vector3<DATA_TYPE> Matrix4<DATA_TYPE>::getTranslation() const
+    {
+        return Vector3<DATA_TYPE>(this->data[3], this->data[7], this->data[11]);
+    }
+
+    template <class DATA_TYPE>
+    void Matrix4<DATA_TYPE>::setTranslation(const Vector3<DATA_TYPE>& t)
+    {
+        this->data[3]  = t.data[0];
+        this->data[7]  = t.data[1];
+        this->data[11] = t.data[2];
+    }
+
+    template <class DATA_TYPE>
+    Vector3<DATA_TYPE> Matrix4<DATA_TYPE>::getScale() const
+    {
+        return Vector3<DATA_TYPE>(
+            std::sqrt(this->data[0]*this->data[0] + this->data[4]*this->data[4] + this->data[8]*this->data[8]),
+            std::sqrt(this->data[1]*this->data[1] + this->data[5]*this->data[5] + this->data[9]*this->data[9]),
+            std::sqrt(this->data[2]*this->data[2] + this->data[6]*this->data[6] + this->data[10]*this->data[10])
+        );
+    }
+
+    template <class DATA_TYPE>
+    Vector3<DATA_TYPE> Matrix4<DATA_TYPE>::transform3(const Vector3<DATA_TYPE>& v) const
+    {
+        auto r = (*this) * Vector4<DATA_TYPE>(v.data[0], v.data[1], v.data[2], DATA_TYPE(1));
+        return Vector3<DATA_TYPE>(r.data[0], r.data[1], r.data[2]);
+    }
+
+    template <class DATA_TYPE>
+    Vector3<DATA_TYPE> Matrix4<DATA_TYPE>::rotate3(const Vector3<DATA_TYPE>& v) const
+    {
+        auto r = (*this) * Vector4<DATA_TYPE>(v.data[0], v.data[1], v.data[2], DATA_TYPE(0));
+        return Vector3<DATA_TYPE>(r.data[0], r.data[1], r.data[2]);
     }
 
 }

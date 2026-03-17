@@ -4,16 +4,22 @@
 
 namespace systems::leal::vector_math {
 
+    /// Generic ROWS×COLS matrix stored in row-major order.
+    ///
+    /// Inherits the full Vec<DATA_TYPE, ROWS*COLS> API (arithmetic, length, dot, etc.).
+    /// Element at row @p r, column @p c lives at `data[r * COLS + c]`.
     template<class DATA_TYPE, uint32_t ROWS, uint32_t COLS>
     class Mat:public Vec<DATA_TYPE,ROWS*COLS> {
     public:
+        /// Default-constructs all elements to zero.
         Mat():Vec<DATA_TYPE,ROWS*COLS>(){}
+
+        /// Constructs all elements from a single @p value.
         Mat(DATA_TYPE value):Vec<DATA_TYPE,ROWS*COLS>(value) {}
 
-        ///////////////
-        // operators //
-        ///////////////
+        // ── Operators ────────────────────────────────────────────────────────
 
+        /// Matrix multiplication: this (ROWS×COLS) × rhs (COLS×N) → result (ROWS×N).
         template<uint32_t N>
         Mat<DATA_TYPE, ROWS, N> operator*(const Mat<DATA_TYPE,COLS,N> &rhs) const {
             Mat<DATA_TYPE, ROWS, N> toReturn;
@@ -32,6 +38,7 @@ namespace systems::leal::vector_math {
             return toReturn;
         }
 
+        /// Scalar multiplication: scales every element by @p scalar.
         Mat<DATA_TYPE, ROWS, COLS> operator*(DATA_TYPE scalar) const {
             Mat<DATA_TYPE, ROWS, COLS> toReturn;
             for (uint32_t a=0; a<this->Size; a++) {
@@ -40,6 +47,7 @@ namespace systems::leal::vector_math {
             return toReturn;
         }
 
+        /// Returns the transpose of this matrix (COLS×ROWS).
         Mat<DATA_TYPE,COLS,ROWS> transpose() const {
             Mat<DATA_TYPE,COLS,ROWS> toReturn;
 

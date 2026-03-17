@@ -7,7 +7,10 @@ A C++17 vector and matrix mathematics library with SIMD acceleration for x86/x64
 - Generic vector and matrix templates (`Vec<T, N>`, `Mat<T, R, C>`)
 - Typed specializations: `Vector2`, `Vector3`, `Vector4`, `Matrix2`, `Matrix3`, `Matrix4`
 - SIMD-optimized `Matrix4f` (SSE) and `Matrix4d` (AVX) for performance-critical paths
-- `Quaternion<T>` for rotations
+- `Quaternion<T>` with Hamilton product, slerp, axis-angle, and vector rotation
+- Rich vector API: dot, cross, distance, angle, reflect, lerp, clamp, floor/ceil/round, component-wise ops
+- Rich matrix API: determinant, inverse, TRS compose/decompose helpers, row/column access
+- Full Doxygen documentation on all public APIs
 - Namespace: `systems::leal::vector_math`
 
 ## Requirements

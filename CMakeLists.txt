@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.22.1)
 
-project(vector_math VERSION 0.1.0)
+project(vector_math VERSION 0.2.0)
 
 configure_file(src/vector_math_config.h.in vector_math_config.h)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 message(STATUS ${CMAKE_SYSTEM_PROCESSOR})
 
