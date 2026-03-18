@@ -1,4 +1,7 @@
 #include <gtest/gtest.h>
+#ifdef _WIN32
+#define _USE_MATH_DEFINES
+#endif
 #include <cmath>
 #include <vector_math/vector_math.hpp>
 #include <vector_math/vector2.hpp>

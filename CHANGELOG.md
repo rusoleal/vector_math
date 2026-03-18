@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.2] - 2026-03-18
+
+### Fixed
+- **Windows CI (`M_PI` undeclared)** — added `#define _USE_MATH_DEFINES` before `<cmath>` under `_WIN32` so MSVC exposes `M_PI` and other POSIX math constants in `test/main.cpp`
+
+---
+
 ## [0.3.1] - 2026-03-18
 
 ### Fixed
