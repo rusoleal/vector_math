@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1] - 2026-03-18
+
+### Fixed
+- **`Matrix4f` ARM NEON matrix–matrix multiply** — `this` rows and `rhs` rows were swapped in the accumulation loop, producing wrong results on AArch64 (Apple Silicon / `ubuntu-24.04-arm`). Fixed to match the x86 SSE logic: load `rhs` rows as vectors and broadcast scalars from each row of `this`.
+
+---
+
 ## [0.3.0] - 2026-03-18
 
 ### Added
