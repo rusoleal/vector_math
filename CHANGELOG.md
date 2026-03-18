@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.3.0] - 2026-03-18
+
+### Added
+- **`Vector4d` SIMD arithmetic** — all operators now have AVX (x86) and NEON (AArch64) paths instead of falling back to the scalar `Vector4<double>` base class:
+  - `operator+` / `operator-`: `_mm256_add/sub_pd` · `vaddq/vsubq_f64`
+  - unary `operator-`: `_mm256_xor_pd` with sign-bit mask · `vnegq_f64`
+  - `operator*(scalar)` / `operator/(scalar)`: `_mm256_mul/div_pd` · `vmulq_n_f64`
+  - `dot()` (instance + static): AVX hadd trick (`_mm256_hadd_pd` + 128-bit extract) · `vpaddq_f64` + `vaddvq_f64`
+- **`Matrix4d` SIMD add / subtract / negate / scalar-multiply** — new overrides replace the 16-element scalar loop with 4 AVX 256-bit ops (one per row) or 8 NEON 128-bit ops:
+  - `operator+(Matrix4d)` / `operator-(Matrix4d)`: `_mm256_add/sub_pd` · `vaddq/vsubq_f64`
+  - unary `operator-()`: `_mm256_xor_pd` · `vnegq_f64`
+  - `operator*(double)`: `_mm256_mul_pd` + `_mm256_set1_pd` · `vmulq_n_f64`
+- **FMA3 in `Matrix4d` mat×mat and mat×vec** (x86) — `mul + add` pairs replaced with `_mm256_fmadd_pd` when compiled with `-mfma` (`__FMA__` defined); reduces 7 instructions to 4 per accumulation step
+- **`Matrix4f * Vector4f` ARM NEON** — previously fell back to scalar; now uses two `vpaddq_f32` passes to compute all four dot products simultaneously
+- **`-mfma` compiler flag** added to the x86 CMake path (gcc/clang: `-mavx -mfma`; MSVC: `/arch:AVX2`)
+- Benchmarks for all new operations: `BM_Vector4dSIMDAdd`, `BM_Vector4dSIMDScalarMultiply`, `BM_Vector4dSIMDDot`, `BM_Matrix4dSIMDAdd`, `BM_Matrix4dSIMDScalarMultiply`, `BM_Matrix4fByVectorGeneric`, with scalar and GLM baselines
+- **AArch64 NEON** full implementation for `Matrix4d` matrix–matrix and matrix–vector multiply (`float64x2_t`, `vfmaq_f64`, `vpaddq_f64`)
+- `Matrix4d::lookAt` optimized inline override — avoids generic `Vec<>` loop overhead and intermediate temporaries
+- CMake **install support**: `GNUInstallDirs`, `CMakePackageConfigHelpers`, package config files (`vector_mathConfig.cmake`, `vector_mathConfigVersion.cmake`), and `INSTALL_INTERFACE` include paths
+- Benchmark suite expanded: `Matrix4f`, `Matrix4d`, `Quaternion`, and GLM comparison benchmarks; removed dummy `BM_StringCreation`
+
+### Changed
+- `Matrix4d` and `Matrix4f` implementations moved from `.cpp` translation units to **header-only inline** methods — `src/matrix4d.cpp` and `src/matrix4f.cpp` removed
+- `Matrix4::identity()` now returns a cached `static const` instance (computed once via IIFE) instead of allocating a local array on every call
+- CI: added **`ubuntu-24.04-arm`** runner (AArch64 NEON coverage); added **Debug** build type alongside Release; `ctest` now runs with `--output-on-failure`
+
+---
+
 ## [0.2.0] - 2026-03-17
 
 ### Added

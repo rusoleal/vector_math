@@ -16,7 +16,7 @@ A C++17 vector and matrix mathematics library with SIMD acceleration for x86/x64
 ## Requirements
 
 - CMake 3.22.1+
-- C++17 compiler (GCC, Clang, MSVC)
+- C++20 compiler (GCC, Clang, MSVC)
 
 ## Building
 
@@ -52,6 +52,7 @@ Architecture is detected automatically at compile time:
 | Architecture | Intrinsics | Types accelerated |
 |---|---|---|
 | x86/x64 | SSE / AVX (`-mavx`) | `Matrix4f` (SSE), `Matrix4d` (AVX) |
-| ARM | NEON | scalar fallback (in progress) |
+| AArch64 | NEON | `Matrix4f` (NEON), `Matrix4d` (NEON) |
+| ARM 32-bit | NEON | `Matrix4f` (NEON), `Matrix4d` (scalar fallback) |
 
 `Vector4f` and `Matrix4f` use `alignas(16)` to satisfy SIMD alignment requirements.

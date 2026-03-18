@@ -533,6 +533,230 @@ TEST(Matrix4DoubleSIMD, IdentityIsNeutralElement) {
 }
 
 // ============================================================
+// Matrix4<double>  –  determinant / invert
+// ============================================================
+TEST(Matrix4Double, DeterminantIdentity) {
+    EXPECT_NEAR(Matrix4<double>::identity().determinant(), 1.0, DOUBLE_EPS);
+}
+
+TEST(Matrix4Double, DeterminantKnownMatrix) {
+    // Diagonal matrix with known det = 1*2*3*4 = 24
+    double buf[16] = {1,0,0,0, 0,2,0,0, 0,0,3,0, 0,0,0,4};
+    EXPECT_NEAR(Matrix4<double>(buf).determinant(), 24.0, DOUBLE_EPS);
+}
+
+TEST(Matrix4Double, DeterminantSingular) {
+    // Row of zeros → det = 0
+    EXPECT_NEAR(Matrix4<double>(0.0).determinant(), 0.0, DOUBLE_EPS);
+}
+
+TEST(Matrix4Double, InvertIdentityIsIdentity) {
+    auto I = Matrix4<double>::identity();
+    EXPECT_TRUE(I.invert());
+    EXPECT_EQ(I, Matrix4<double>::identity());
+}
+
+TEST(Matrix4Double, InvertedRoundtrip) {
+    // M * M^-1 == identity
+    double buf[16] = {1,2,0,0, 0,1,0,0, 0,0,1,3, 0,0,0,1};
+    Matrix4<double> M(buf);
+    auto Minv = M.inverted();
+    auto result = M * Minv;
+    for (int i = 0; i < 4; i++)
+        for (int j = 0; j < 4; j++)
+            EXPECT_NEAR(result.data[i*4+j], (i == j) ? 1.0 : 0.0, 1e-9);
+}
+
+TEST(Matrix4Double, InvertSingularReturnsFalse) {
+    Matrix4<double> M(0.0); // all zeros — singular
+    EXPECT_FALSE(M.invert());
+    // matrix must remain unchanged
+    EXPECT_EQ(M, Matrix4<double>(0.0));
+}
+
+// ============================================================
+// Matrix4<float>  –  determinant / invert
+// ============================================================
+TEST(Matrix4Float, DeterminantIdentity) {
+    EXPECT_NEAR(Matrix4<float>::identity().determinant(), 1.f, FLOAT_EPS);
+}
+
+TEST(Matrix4Float, InvertedRoundtrip) {
+    float buf[16] = {1,2,0,0, 0,1,0,0, 0,0,1,3, 0,0,0,1};
+    Matrix4<float> M(buf);
+    auto result = M * M.inverted();
+    for (int i = 0; i < 4; i++)
+        for (int j = 0; j < 4; j++)
+            EXPECT_NEAR(result.data[i*4+j], (i == j) ? 1.f : 0.f, FLOAT_EPS);
+}
+
+TEST(Matrix4Float, InvertSingularReturnsFalse) {
+    Matrix4<float> M(0.f);
+    EXPECT_FALSE(M.invert());
+    EXPECT_EQ(M, Matrix4<float>(0.f));
+}
+
+// ============================================================
+// Matrix4d::lookAt  –  custom optimized override
+// ============================================================
+TEST(Matrix4DoubleSIMD, LookAtMatchesGeneric) {
+    Vector3<double> eye(1,2,3), target(4,5,6), up(0,1,0);
+    auto generic = Matrix4<double>::lookAt(eye, target, up);
+    auto simd    = Matrix4d::lookAt(eye, target, up);
+    for (int i = 0; i < 16; i++)
+        EXPECT_NEAR(simd.data[i], generic.data[i], 1e-10) << "at index " << i;
+}
+
+TEST(Matrix4DoubleSIMD, LookAtAlongZAxis) {
+    auto V = Matrix4d::lookAt(
+        Vector3<double>(0,0,0),
+        Vector3<double>(0,0,1),
+        Vector3<double>(0,1,0)
+    );
+    EXPECT_NEAR(V.data[0],  1.0, DOUBLE_EPS);
+    EXPECT_NEAR(V.data[5],  1.0, DOUBLE_EPS);
+    EXPECT_NEAR(V.data[10], 1.0, DOUBLE_EPS);
+    EXPECT_NEAR(V.data[3],  0.0, DOUBLE_EPS);
+    EXPECT_NEAR(V.data[7],  0.0, DOUBLE_EPS);
+    EXPECT_NEAR(V.data[11], 0.0, DOUBLE_EPS);
+}
+
+TEST(Matrix4DoubleSIMD, LookAtTranslation) {
+    auto V = Matrix4d::lookAt(
+        Vector3<double>(0,0,-5),
+        Vector3<double>(0,0,0),
+        Vector3<double>(0,1,0)
+    );
+    EXPECT_NEAR(V.data[11], 5.0, DOUBLE_EPS);
+}
+
+TEST(Matrix4DoubleSIMD, LookAtMultiplyAssociativity) {
+    // (M1*M2)*v == M1*(M2*v)
+    Vector3<double> eye(3,2,1), target(0,0,0), up(0,1,0);
+    Matrix4d V = Matrix4d::lookAt(eye, target, up);
+    double a[16] = {2,0,1,3,1,2,3,0,0,3,2,1,3,1,0,2};
+    Matrix4d A(a);
+    double m1[16] = {1,2,3,4,0,1,2,3,5,6,7,8,10,11,12,13};
+    Matrix4d B(m1);
+    auto AB_V  = (A * B) * V;
+    auto A_BV  = A * (B * V);
+    for (int i = 0; i < 16; i++)
+        EXPECT_NEAR(AB_V.data[i], A_BV.data[i], 1e-9) << "at index " << i;
+}
+
+// ============================================================
+// Vector4d  –  SIMD double arithmetic
+// ============================================================
+TEST(Vector4dSIMD, Addition) {
+    Vector4d a(1,2,3,4), b(5,6,7,8);
+    auto r = a + b;
+    EXPECT_NEAR(r.data[0], 6.0,  DOUBLE_EPS);
+    EXPECT_NEAR(r.data[1], 8.0,  DOUBLE_EPS);
+    EXPECT_NEAR(r.data[2], 10.0, DOUBLE_EPS);
+    EXPECT_NEAR(r.data[3], 12.0, DOUBLE_EPS);
+}
+
+TEST(Vector4dSIMD, Subtraction) {
+    Vector4d a(5,6,7,8), b(1,2,3,4);
+    auto r = a - b;
+    EXPECT_NEAR(r.data[0], 4.0, DOUBLE_EPS);
+    EXPECT_NEAR(r.data[1], 4.0, DOUBLE_EPS);
+    EXPECT_NEAR(r.data[2], 4.0, DOUBLE_EPS);
+    EXPECT_NEAR(r.data[3], 4.0, DOUBLE_EPS);
+}
+
+TEST(Vector4dSIMD, Negation) {
+    Vector4d v(1,-2,3,-4);
+    auto r = -v;
+    EXPECT_NEAR(r.data[0], -1.0, DOUBLE_EPS);
+    EXPECT_NEAR(r.data[1],  2.0, DOUBLE_EPS);
+    EXPECT_NEAR(r.data[2], -3.0, DOUBLE_EPS);
+    EXPECT_NEAR(r.data[3],  4.0, DOUBLE_EPS);
+}
+
+TEST(Vector4dSIMD, ScalarMultiply) {
+    Vector4d v(1,2,3,4);
+    auto r1 = v * 2.0;
+    auto r2 = 2.0 * v;
+    for (int i = 0; i < 4; i++) {
+        EXPECT_NEAR(r1.data[i], (i+1)*2.0, DOUBLE_EPS);
+        EXPECT_NEAR(r2.data[i], (i+1)*2.0, DOUBLE_EPS);
+    }
+}
+
+TEST(Vector4dSIMD, ScalarDivide) {
+    Vector4d v(2,4,6,8);
+    auto r = v / 2.0;
+    EXPECT_NEAR(r.data[0], 1.0, DOUBLE_EPS);
+    EXPECT_NEAR(r.data[1], 2.0, DOUBLE_EPS);
+    EXPECT_NEAR(r.data[2], 3.0, DOUBLE_EPS);
+    EXPECT_NEAR(r.data[3], 4.0, DOUBLE_EPS);
+}
+
+TEST(Vector4dSIMD, Dot) {
+    Vector4d a(1,2,3,4), b(4,3,2,1);
+    EXPECT_NEAR(a.dot(b), 20.0, DOUBLE_EPS);
+    EXPECT_NEAR(Vector4d::dot(a, b), 20.0, DOUBLE_EPS);
+}
+
+TEST(Vector4dSIMD, MatchesGenericAdd) {
+    Vector4<double> ga(1.5, 2.5, 3.5, 4.5), gb(0.1, 0.2, 0.3, 0.4);
+    auto generic = ga + gb;
+    auto simd    = Vector4d(1.5,2.5,3.5,4.5) + Vector4d(0.1,0.2,0.3,0.4);
+    for (int i = 0; i < 4; i++)
+        EXPECT_NEAR(simd.data[i], generic.data[i], DOUBLE_EPS);
+}
+
+// ============================================================
+// Matrix4d  –  SIMD add / subtract / negate / scalar-multiply
+// ============================================================
+TEST(Matrix4DoubleSIMD, AddMatchesGeneric) {
+    double a[16] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
+    double b[16] = {16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1};
+    auto generic = Matrix4<double>(a) + Matrix4<double>(b);
+    auto simd    = Matrix4d(a) + Matrix4d(b);
+    for (int i = 0; i < 16; i++)
+        EXPECT_NEAR(simd.data[i], generic.data[i], DOUBLE_EPS) << "at index " << i;
+}
+
+TEST(Matrix4DoubleSIMD, SubtractMatchesGeneric) {
+    double a[16] = {16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1};
+    double b[16] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
+    auto generic = Matrix4<double>(a) - Matrix4<double>(b);
+    auto simd    = Matrix4d(a) - Matrix4d(b);
+    for (int i = 0; i < 16; i++)
+        EXPECT_NEAR(simd.data[i], generic.data[i], DOUBLE_EPS) << "at index " << i;
+}
+
+TEST(Matrix4DoubleSIMD, NegateMatchesGeneric) {
+    double a[16] = {1,-2,3,-4,5,-6,7,-8,9,-10,11,-12,13,-14,15,-16};
+    auto generic = -(Matrix4<double>(a));
+    auto simd    = -(Matrix4d(a));
+    for (int i = 0; i < 16; i++)
+        EXPECT_NEAR(simd.data[i], generic.data[i], DOUBLE_EPS) << "at index " << i;
+}
+
+TEST(Matrix4DoubleSIMD, ScalarMultiplyMatchesGeneric) {
+    double a[16] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
+    auto generic = Matrix4<double>(a) * 3.0;
+    auto simd    = Matrix4d(a) * 3.0;
+    for (int i = 0; i < 16; i++)
+        EXPECT_NEAR(simd.data[i], generic.data[i], DOUBLE_EPS) << "at index " << i;
+}
+
+// ============================================================
+// Matrix4f  –  SIMD ARM vector multiply (validates on all platforms)
+// ============================================================
+TEST(Matrix4FloatSIMD, VectorMultiplyMatchesGeneric) {
+    float m[16] = {2,0,1,3,1,2,3,0,0,3,2,1,3,1,0,2};
+    Vector4<float> v(1,2,3,4);
+    auto generic = Matrix4<float>(m) * v;
+    auto simd    = Matrix4f(m) * Vector4f(v.data[0],v.data[1],v.data[2],v.data[3]);
+    for (int i = 0; i < 4; i++)
+        EXPECT_NEAR(simd.data[i], generic.data[i], FLOAT_EPS) << "at index " << i;
+}
+
+// ============================================================
 // Quaternion
 // ============================================================
 TEST(Quaternion, Constructor) {

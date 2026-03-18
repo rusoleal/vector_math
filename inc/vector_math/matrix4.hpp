@@ -181,13 +181,12 @@ namespace systems::leal::vector_math
     template <class DATA_TYPE>
     Matrix4<DATA_TYPE> Matrix4<DATA_TYPE>::identity()
     {
-        DATA_TYPE data[] = {
-            1.0,0.0,0.0,0.0,
-            0.0,1.0,0.0,0.0,
-            0.0,0.0,1.0,0.0,
-            0.0,0.0,0.0,1.0,
-        };
-        return Matrix4<DATA_TYPE>(data);
+        static const Matrix4<DATA_TYPE> kIdentity = []() {
+            Matrix4<DATA_TYPE> m(DATA_TYPE(0));
+            m.data[0] = m.data[5] = m.data[10] = m.data[15] = DATA_TYPE(1);
+            return m;
+        }();
+        return kIdentity;
     }
 
     template <class DATA_TYPE>

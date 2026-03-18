@@ -1,0 +1,5 @@
+@PACKAGE_INIT@
+
+include("${CMAKE_CURRENT_LIST_DIR}/vector_mathTargets.cmake")
+
+check_required_components(vector_math)

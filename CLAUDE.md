@@ -55,9 +55,10 @@ Architecture is detected at compile time:
 
 `Matrix4f` uses SSE 128-bit intrinsics (4×float). `Matrix4d` uses AVX 256-bit intrinsics (4×double). ARM paths currently fall back to scalar operations.
 
-### Known issues
+### Known limitations
 
-- `matrix4d` AVX implementation is broken (commit `f7bf612`). The scalar fallback is used on ARM; the AVX path may mix `_mm256_add_ps` (32-bit) with `_mm256_add_pd` (64-bit) incorrectly.
+- `Matrix4d` ARM 32-bit (ARMv7) uses scalar fallback — `float64x2_t` is AArch64-only. AArch64 (Apple Silicon, `ubuntu-24.04-arm`) uses the full NEON implementation.
+- `Matrix4f` vector-multiply `#else` fallback (non-x86, non-ARM) uses a reinterpret cast (`*(Vector4f*)&toReturn`) rather than the copy constructor; technically UB but harmless in practice.
 
 ### Dependencies (auto-fetched by CMake via FetchContent)
 
