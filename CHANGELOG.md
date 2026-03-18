@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.4] - 2026-03-18
+
+### Fixed
+- **`M_PI` still undeclared on MSVC in `test/main.cpp`** — `#define _USE_MATH_DEFINES` + `#include <cmath>` were placed *after* `#include <gtest/gtest.h>`, which pulls in `<cmath>` transitively before the define was seen. Moved the define and `<cmath>` above the gtest include so MSVC exposes `M_PI` before the include-guard prevents a second parse.
+
+---
+
 ## [0.3.3] - 2026-03-18
 
 ### Fixed
