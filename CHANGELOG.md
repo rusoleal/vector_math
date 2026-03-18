@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.3] - 2026-03-18
+
+### Fixed
+- **`_USE_MATH_DEFINES` propagated to library headers** — `common.hpp` and `vec.hpp` now define `_USE_MATH_DEFINES` before `<cmath>` under `_WIN32`, so any consumer compiling on MSVC gets `M_PI` and other POSIX math constants without needing to set the macro themselves. Previously this guard was only applied in `test/main.cpp`.
+
+---
+
 ## [0.3.2] - 2026-03-18
 
 ### Fixed
