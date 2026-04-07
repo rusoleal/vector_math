@@ -79,3 +79,31 @@ jobs:
     - name: Test
       working-directory: ${{ steps.strings.outputs.build-output-dir }}
       run: ctest --build-config ${{ matrix.build_type }} --output-on-failure
+
+  android-build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+
+      # Android cross-compilation matrix.
+      # Tests are compiled but not executed (no Android runtime on the host runner).
+      matrix:
+        abi: [armeabi-v7a, arm64-v8a, x86, x86_64]
+        build_type: [Release, Debug]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Configure CMake (Android)
+      run: >
+        cmake -B ${{ github.workspace }}/build
+        -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_ROOT/build/cmake/android.toolchain.cmake
+        -DANDROID_ABI=${{ matrix.abi }}
+        -DANDROID_PLATFORM=android-21
+        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        -DVECTOR_MATH_BUILD_TEST=ON
+        -S ${{ github.workspace }}
+
+    - name: Build
+      run: cmake --build ${{ github.workspace }}/build --config ${{ matrix.build_type }}

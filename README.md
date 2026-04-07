@@ -53,6 +53,6 @@ Architecture is detected automatically at compile time:
 |---|---|---|
 | x86/x64 | SSE / AVX (`-mavx`) | `Matrix4f` (SSE), `Matrix4d` (AVX) |
 | AArch64 | NEON | `Matrix4f` (NEON), `Matrix4d` (NEON) |
-| ARM 32-bit | NEON | `Matrix4f` (NEON), `Matrix4d` (scalar fallback) |
+| ARM 32-bit | — | `Matrix4f` (scalar fallback), `Matrix4d` (scalar fallback) |
 
 `Vector4f` and `Matrix4f` use `alignas(16)` to satisfy SIMD alignment requirements.

@@ -63,7 +63,7 @@ namespace systems::leal::vector_math
                     _mm_store_ps(&toReturn.data[4*i], row);
                 }
                 return toReturn;
-            #elif defined(__VECTOR_MATH_ARCH_ARM)
+            #elif defined(__VECTOR_MATH_ARCH_ARM) && (defined(__arm64__) || defined(__aarch64__))
                 Matrix4f toReturn;
                 // Load rows of rhs (these are the vectors we accumulate into each result row)
                 float32x4_t B0 = vld1q_f32(rhs.data);
@@ -134,7 +134,7 @@ namespace systems::leal::vector_math
                 Vector4f toReturn;
                 _mm_store_ps(toReturn.data, result);
                 return toReturn;
-            #elif defined(__VECTOR_MATH_ARCH_ARM)
+            #elif defined(__VECTOR_MATH_ARCH_ARM) && (defined(__arm64__) || defined(__aarch64__))
                 // Load each row and the vector, then compute 4 dot products simultaneously:
                 // pairwise-add of element-wise products reduces [r0*v, r1*v, r2*v, r3*v]
                 // to [dot(r0,v), dot(r1,v), dot(r2,v), dot(r3,v)] in two vpaddq passes.

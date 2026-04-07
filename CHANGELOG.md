@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.3.5] - 2026-04-07
+
+### Fixed
+- **`Matrix4f` ARMv7 build failure** — the ARM NEON paths in `matrix4f.hpp` used AArch64-only intrinsics (`vfmaq_laneq_f32`, `vpaddq_f32`) unconditionally for all ARM targets. Added `&& (defined(__arm64__) || defined(__aarch64__))` guards to both the matrix–matrix and matrix–vector multiply operators, mirroring the existing pattern in `matrix4d.hpp`. ARMv7 (`armeabi-v7a`) now falls back to the scalar implementation.
+
+### Added
+- **Android CI** — new `android-build` job in `cmake-multi-platform.yml` cross-compiles the library and test suite for all four Android ABIs (`armeabi-v7a`, `arm64-v8a`, `x86`, `x86_64`) in both `Release` and `Debug` using the NDK toolchain (`android-21`). Tests are compiled but not executed (no Android runtime on the host runner).
+
+---
+
 ## [0.3.4] - 2026-03-18
 
 ### Fixed
