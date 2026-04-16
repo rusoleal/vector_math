@@ -1,6 +1,6 @@
 # vector_math
 
-A C++17 vector and matrix mathematics library with SIMD acceleration for x86/x64 (SSE/AVX) and ARM (NEON).
+A C++20 vector and matrix mathematics library with SIMD acceleration for x86/x64 (SSE/AVX) and ARM (NEON).
 
 ## 🚀 Part of the Campello Engine
 
