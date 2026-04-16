@@ -2,6 +2,15 @@
 
 A C++17 vector and matrix mathematics library with SIMD acceleration for x86/x64 (SSE/AVX) and ARM (NEON).
 
+## 🚀 Part of the Campello Engine
+
+This project is a module within the **Campello** ecosystem.
+
+👉 Main repository: https://github.com/rusoleal/campello
+
+Campello is a modular, composable game engine built as a collection of independent libraries.
+Each module is designed to work standalone, but integrates seamlessly into the engine runtime.
+
 ## Features
 
 - Generic vector and matrix templates (`Vec<T, N>`, `Mat<T, R, C>`)
