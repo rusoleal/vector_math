@@ -17,7 +17,8 @@
 ## P0 — Critical Gaps (Highest Impact)
 
 ### 1. `Vector4f` — Add Full SIMD Overrides
-**Current state:** Only `alignas(16)`; falls back to scalar `Vector4<float>` for all ops.  
+**Status:** Done  
+**Current state:** Implemented in `inc/vector_math/vector4f.hpp` with SSE/NEON/scalar paths for arithmetic and `dot`.  
 **Why:** 4 floats fit perfectly in one 128-bit SSE/NEON register. This is the most glaring omission.
 
 | Method | x86/x64 (SSE) | AArch64 (NEON) |
@@ -37,7 +38,8 @@
 ---
 
 ### 2. `Matrix4f` — Add Missing Component-Wise SIMD Operators
-**Current state:** Only `operator*(Matrix4f)` and `operator*(Vector4f)` are SIMD-accelerated. `+`, `-`, `-()`, `* scalar` fall back to generic scalar loops.  
+**Status:** Done  
+**Current state:** Implemented in `inc/vector_math/matrix4f.hpp` for `+`, `-`, unary `-`, and `* scalar` with SSE/NEON/scalar paths.  
 **Why:** Matrix4d already has these; Matrix4f should be consistent. 16 floats = 4 rows of SSE/NEON ops.
 
 | Method | x86/x64 (SSE) | AArch64 (NEON) |
@@ -53,7 +55,8 @@
 ---
 
 ### 3. `Matrix4f::lookAt` — Scalar-Fast Override
-**Current state:** Uses generic `Matrix4<float>::lookAt` which builds intermediate `Vector3`s and calls `identity()`.  
+**Status:** Done  
+**Current state:** Implemented as a scalar-fast override in `inc/vector_math/matrix4f.hpp`.  
 **Why:** `Matrix4d` has an optimized inline scalar override that avoids all generic `Vec<>` loop overhead. Same optimization applies here.
 
 **Approach:** Port the `Matrix4d::lookAt` scalar-fast implementation to `Matrix4f`.
@@ -65,7 +68,8 @@
 ## P1 — Significant New SIMD Types
 
 ### 4. `Vector3f` — New 16-byte Aligned SIMD Type
-**Current state:** No SIMD specialization for 3D float vectors.  
+**Status:** Done  
+**Current state:** Implemented in `inc/vector_math/vector3f.hpp` as a padded 16-byte type with SSE/NEON/scalar paths.  
 **Why:** `Vector3` is the workhorse of 3D graphics. 3 floats fit in a 128-bit register with 1 unused lane (set to 0).
 
 **New file:** `inc/vector_math/vector3f.hpp`
@@ -90,7 +94,8 @@
 ---
 
 ### 5. `Vector3d` — New 32-byte Aligned SIMD Type
-**Current state:** No SIMD specialization for 3D double vectors.  
+**Status:** Done  
+**Current state:** Implemented in `inc/vector_math/vector3d.hpp` as a padded 32-byte type with AVX/NEON/scalar paths; AVX2-only cross-product shuffle path is guarded.  
 **Why:** Same rationale as `Vector3f`. 3 doubles fit in 256-bit AVX with 1 unused lane, or 2× NEON `float64x2_t` (ignoring the 4th element of the 2nd register).
 
 **New file:** `inc/vector_math/vector3d.hpp`
@@ -112,7 +117,8 @@
 ---
 
 ### 6. `Quaternionf` — New 16-byte Aligned SIMD Type
-**Current state:** `Quaternion<float>` inherits `Vector4<float>` — all scalar.  
+**Status:** Done  
+**Current state:** Implemented in `inc/vector_math/quaternionf.hpp` with typed float specialization, SIMD-backed component ops/dot/conjugation, and `Vector3f` rotation overloads.  
 **Why:** Quaternions are 4 floats = perfect SSE/NEON fit. The Hamilton product (`operator*`) is 16 multiplies + 12 adds — SIMD helps significantly.
 
 **New file:** `inc/vector_math/quaternionf.hpp`
@@ -142,7 +148,8 @@ This decomposes into 4 SIMD dot-products with sign-flipped shuffles.
 ---
 
 ### 7. `Quaterniond` — New 32-byte Aligned SIMD Type
-**Current state:** `Quaternion<double>` inherits `Vector4<double>` — all scalar.  
+**Status:** Done  
+**Current state:** Implemented in `inc/vector_math/quaterniond.hpp` with typed double specialization, SIMD-backed component ops/dot/conjugation where available, and `Vector3d` rotation overloads.  
 **Why:** Same as `Quaternionf` but for double precision. Inherits `Vector4d` component-wise ops, but Hamilton product and `rotated` are custom scalar.
 
 **New file:** `inc/vector_math/quaterniond.hpp`
@@ -159,7 +166,8 @@ This decomposes into 4 SIMD dot-products with sign-flipped shuffles.
 ## P2 — Extensions & Nice-to-Haves
 
 ### 8. `Vector4f` / `Vector4d` — `lengthSquared`, `normalize`, `distanceToSquared`
-**Current state:** Inherited from `Vec<>` — scalar loops.  
+**Status:** Done  
+**Current state:** Implemented in `inc/vector_math/vector4f.hpp` and `inc/vector_math/vector4d.hpp` using the SIMD `dot` path plus scalar `sqrt` for normalization.  
 **Why:** Hot paths in graphics. Can reuse the SIMD `dot` implementation already planned above.
 
 | Method | SIMD Approach |
@@ -173,7 +181,8 @@ This decomposes into 4 SIMD dot-products with sign-flipped shuffles.
 ---
 
 ### 9. `Matrix4f::compose` / `Matrix4d::compose` — SIMD Column Scaling
-**Current state:** Scalar loop scaling the first 3 columns by scale vector components.  
+**Status:** Done  
+**Current state:** Implemented in `inc/vector_math/matrix4f.hpp` and `inc/vector_math/matrix4d.hpp` with SIMD scaling of the first three rows of the rotation basis before writing translation.  
 **Why:** 3 columns × 4 components = 12 multiplies. Can be done with 3 SSE/AVX rows or 3 NEON `float32x4_t` / 6 `float64x2_t` multiplies.
 
 **Approach:** Override `compose` in `Matrix4f` and `Matrix4d` to scale columns 0-2 with SIMD broadcast-multiplies instead of scalar element-wise.
@@ -183,7 +192,8 @@ This decomposes into 4 SIMD dot-products with sign-flipped shuffles.
 ---
 
 ### 10. `Vec` — SIMD-Aware Generic Helpers (Conditional)
-**Current state:** All `Vec<DATA_TYPE, SIZE>` helpers are scalar loops.  
+**Status:** Done via concrete SIMD types  
+**Current state:** SIMD helper overrides were implemented in the concrete 4-wide SIMD types (`Vector4f`, `Vector4d`) for `lerp`, `min`, `max`, `clamp`, and `absolute`; the generic `Vec<>` template remains scalar by design.  
 **Why:** For `SIZE == 4` and `DATA_TYPE == float/double`, these could dispatch to SIMD internally without creating new types.
 
 **Candidates:**
@@ -194,15 +204,16 @@ This decomposes into 4 SIMD dot-products with sign-flipped shuffles.
 
 **Risk:** Adds complexity to generic templates. May be cleaner to only implement in the concrete SIMD types (`Vector4f`, `Vector4d`, etc.) rather than the generic `Vec<>` base.
 
-**Recommendation:** Implement in concrete SIMD types only. Mark as **P2**.
+**Outcome:** Implemented in concrete SIMD types only, matching the recommendation.
 
 ---
 
 ### 11. `Vector2f` / `Vector2d` — New Aligned SIMD Types
-**Current state:** No SIMD specialization.  
+**Status:** Done  
+**Current state:** Implemented in `inc/vector_math/vector2f.hpp` and `inc/vector_math/vector2d.hpp` as aligned 2D SIMD-friendly types with arithmetic, dot, cross, normalize, and reflect helpers.  
 **Why:** 2 floats/doubles = half a 128-bit register. SIMD benefit is marginal for such small types unless doing batch operations. Horizontal operations (`dot`, `cross`/`perp`) are trivial scalar.
 
-**Verdict:** Low priority. A compiler with auto-vectorization usually handles 2-wide scalar code well. **Defer.**
+**Verdict:** Low priority, but now implemented for API completeness and benchmark coverage.
 
 ---
 
@@ -224,11 +235,11 @@ This decomposes into 4 SIMD dot-products with sign-flipped shuffles.
 
 For every SIMD implementation added:
 
-- [ ] **Numerical correctness:** Add GoogleTest cases comparing SIMD result against generic scalar result with appropriate epsilon (`FLOAT_EPS`, `DOUBLE_EPS`).
-- [ ] **Alignment safety:** Ensure `alignas(16)` for float types and `alignas(32)` for double types are respected in constructors, stack allocation, and member storage.
-- [ ] **NEON 32-bit fallback:** ARMv7 lacks double-precision NEON. Ensure `Vector3d`, `Vector4d`, `Matrix4d`, `Quaterniond` fall back to scalar on `__arm__` (non-`__aarch64__`).
-- [ ] **Benchmark:** Add `google/benchmark` cases comparing SIMD type vs generic type vs GLM (where applicable).
-- [ ] **Include headers:** Update `vector_math.hpp` (or main include) to expose new types.
+- [x] **Numerical correctness:** GoogleTest coverage added for the implemented SIMD types and overrides, comparing SIMD result against generic scalar result with `FLOAT_EPS` / `DOUBLE_EPS`.
+- [x] **Alignment safety:** `alignas(16)` / `alignas(32)` enforced for the implemented float and double SIMD types, with constructor and size/alignment tests added.
+- [x] **NEON 32-bit fallback:** Double-precision SIMD types fall back to scalar on non-AArch64 ARM.
+- [x] **Benchmark:** Added `google/benchmark` cases comparing SIMD type vs generic type vs GLM for representative vector and matrix paths.
+- [x] **Include headers:** `vector_math.hpp` updated to expose the new SIMD vector and quaternion types.
 
 ---
 
@@ -236,14 +247,14 @@ For every SIMD implementation added:
 
 | # | Task | Type | x86/64 | NEON | Effort | Impact |
 |---|------|------|--------|------|--------|--------|
-| 1 | `Vector4f` SIMD ops | Missing | SSE | ✅ | Low | **High** |
-| 2 | `Matrix4f` component-wise ops | Missing | SSE | ✅ | Low | **High** |
-| 3 | `Matrix4f::lookAt` scalar fast | Missing | Scalar | Scalar | Low | Medium |
-| 4 | `Vector3f` new SIMD type | New | SSE | ✅ | Medium | **High** |
-| 5 | `Vector3d` new SIMD type | New | AVX | ✅ | Medium | Medium |
-| 6 | `Quaternionf` new SIMD type | New | SSE | ✅ | Medium | **High** |
-| 7 | `Quaterniond` new SIMD type | New | AVX | ✅ | Medium | Medium |
-| 8 | `Vector4f/d` length/normalize | Extension | SSE/AVX | ✅ | Low | Medium |
-| 9 | `Matrix4f/d::compose` SIMD | Extension | SSE/AVX | ✅ | Low | Low |
-| 10 | `Vec` generic SIMD helpers | Extension | SSE/AVX | ✅ | Medium | Low |
-| 11 | `Vector2f/d` SIMD | Defer | — | — | — | Low |
+| 1 | `Vector4f` SIMD ops | Done | SSE | ✅ | Low | **High** |
+| 2 | `Matrix4f` component-wise ops | Done | SSE | ✅ | Low | **High** |
+| 3 | `Matrix4f::lookAt` scalar fast | Done | Scalar | Scalar | Low | Medium |
+| 4 | `Vector3f` new SIMD type | Done | SSE | ✅ | Medium | **High** |
+| 5 | `Vector3d` new SIMD type | Done | AVX | ✅ | Medium | Medium |
+| 6 | `Quaternionf` new SIMD type | Done | SSE | ✅ | Medium | **High** |
+| 7 | `Quaterniond` new SIMD type | Done | AVX | ✅ | Medium | Medium |
+| 8 | `Vector4f/d` length/normalize | Done | SSE/AVX | ✅ | Low | Medium |
+| 9 | `Matrix4f/d::compose` SIMD | Done | SSE/AVX | ✅ | Low | Low |
+| 10 | `Vec` generic SIMD helpers | Done via concrete types | SSE/AVX | ✅ | Medium | Low |
+| 11 | `Vector2f/d` SIMD | Done | SSE2 / scalar | ✅ | Low | Low |

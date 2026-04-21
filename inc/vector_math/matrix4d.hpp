@@ -45,7 +45,7 @@ namespace systems::leal::vector_math
         /// Matrix–matrix multiplication using SIMD intrinsics.
         /// x86: each output row = broadcast(A[i,*]) · rows of B, accumulated via FMA when available.
         inline Matrix4d operator*(const Matrix4d &rhs) const {
-            #ifdef __VECTOR_MATH_ARCH_X86_X64
+            #if defined(__VECTOR_MATH_ARCH_X86_X64) && defined(__AVX__)
                 Matrix4d toReturn;
                 __m256d row1 = _mm256_load_pd(&rhs.data[0]);
                 __m256d row2 = _mm256_load_pd(&rhs.data[4]);
@@ -118,7 +118,7 @@ namespace systems::leal::vector_math
         /// Uses a row-dot-product pattern: each result element is the dot product of
         /// a matrix row with the input vector, computed via pairwise FMA + vpaddq_f64.
         inline Vector4d operator*(const Vector4d &rhs) const {
-            #ifdef __VECTOR_MATH_ARCH_X86_X64
+            #if defined(__VECTOR_MATH_ARCH_X86_X64) && defined(__AVX__)
                 __m256d row0 = _mm256_load_pd(&this->data[0]);
                 __m256d row1 = _mm256_load_pd(&this->data[4]);
                 __m256d row2 = _mm256_load_pd(&this->data[8]);
@@ -180,7 +180,7 @@ namespace systems::leal::vector_math
         /// Component-wise addition using SIMD intrinsics.
         /// x86: 4 AVX 256-bit loads/adds/stores (one per row). AArch64: 8 NEON 128-bit ops.
         inline Matrix4d operator+(const Matrix4d& rhs) const {
-            #ifdef __VECTOR_MATH_ARCH_X86_X64
+            #if defined(__VECTOR_MATH_ARCH_X86_X64) && defined(__AVX__)
                 Matrix4d result;
                 _mm256_store_pd(&result.data[0],  _mm256_add_pd(_mm256_load_pd(&this->data[0]),  _mm256_load_pd(&rhs.data[0])));
                 _mm256_store_pd(&result.data[4],  _mm256_add_pd(_mm256_load_pd(&this->data[4]),  _mm256_load_pd(&rhs.data[4])));
@@ -202,7 +202,7 @@ namespace systems::leal::vector_math
 
         /// Component-wise subtraction using SIMD intrinsics.
         inline Matrix4d operator-(const Matrix4d& rhs) const {
-            #ifdef __VECTOR_MATH_ARCH_X86_X64
+            #if defined(__VECTOR_MATH_ARCH_X86_X64) && defined(__AVX__)
                 Matrix4d result;
                 _mm256_store_pd(&result.data[0],  _mm256_sub_pd(_mm256_load_pd(&this->data[0]),  _mm256_load_pd(&rhs.data[0])));
                 _mm256_store_pd(&result.data[4],  _mm256_sub_pd(_mm256_load_pd(&this->data[4]),  _mm256_load_pd(&rhs.data[4])));
@@ -224,7 +224,7 @@ namespace systems::leal::vector_math
 
         /// Negation using SIMD intrinsics (flips sign bit via XOR with -0.0).
         inline Matrix4d operator-() const {
-            #ifdef __VECTOR_MATH_ARCH_X86_X64
+            #if defined(__VECTOR_MATH_ARCH_X86_X64) && defined(__AVX__)
                 Matrix4d result;
                 __m256d sign_mask = _mm256_set1_pd(-0.0);
                 _mm256_store_pd(&result.data[0],  _mm256_xor_pd(_mm256_load_pd(&this->data[0]),  sign_mask));
@@ -245,7 +245,7 @@ namespace systems::leal::vector_math
 
         /// Scalar multiplication using SIMD intrinsics.
         inline Matrix4d operator*(double scalar) const {
-            #ifdef __VECTOR_MATH_ARCH_X86_X64
+            #if defined(__VECTOR_MATH_ARCH_X86_X64) && defined(__AVX__)
                 Matrix4d result;
                 __m256d s = _mm256_set1_pd(scalar);
                 _mm256_store_pd(&result.data[0],  _mm256_mul_pd(_mm256_load_pd(&this->data[0]),  s));
@@ -296,6 +296,34 @@ namespace systems::leal::vector_math
                 0.0, 0.0, 0.0, 1.0
             };
             return Matrix4d(buf);
+        }
+
+        /// Builds a TRS matrix with SIMD column scaling for the rotation basis.
+        static inline Matrix4d compose(const Vector3<double>& translation, const Quaternion<double>& rotation, const Vector3<double>& scaleVec)
+        {
+            Matrix4d result(Matrix4<double>::rotate(rotation));
+            #if defined(__VECTOR_MATH_ARCH_X86_X64) && defined(__AVX__)
+                __m256d scale = _mm256_set_pd(1.0, scaleVec.data[2], scaleVec.data[1], scaleVec.data[0]);
+                _mm256_store_pd(&result.data[0], _mm256_mul_pd(_mm256_load_pd(&result.data[0]), scale));
+                _mm256_store_pd(&result.data[4], _mm256_mul_pd(_mm256_load_pd(&result.data[4]), scale));
+                _mm256_store_pd(&result.data[8], _mm256_mul_pd(_mm256_load_pd(&result.data[8]), scale));
+            #elif defined(__VECTOR_MATH_ARCH_ARM) && (defined(__arm64__) || defined(__aarch64__))
+                float64x2_t scale_lo = { scaleVec.data[0], scaleVec.data[1] };
+                float64x2_t scale_hi = { scaleVec.data[2], 1.0 };
+                for (int row = 0; row < 3; ++row) {
+                    int idx = row * 4;
+                    vst1q_f64(&result.data[idx],     vmulq_f64(vld1q_f64(&result.data[idx]),     scale_lo));
+                    vst1q_f64(&result.data[idx + 2], vmulq_f64(vld1q_f64(&result.data[idx + 2]), scale_hi));
+                }
+            #else
+                result.data[0] *= scaleVec.data[0]; result.data[1] *= scaleVec.data[1]; result.data[2]  *= scaleVec.data[2];
+                result.data[4] *= scaleVec.data[0]; result.data[5] *= scaleVec.data[1]; result.data[6]  *= scaleVec.data[2];
+                result.data[8] *= scaleVec.data[0]; result.data[9] *= scaleVec.data[1]; result.data[10] *= scaleVec.data[2];
+            #endif
+            result.data[3]  = translation.data[0];
+            result.data[7]  = translation.data[1];
+            result.data[11] = translation.data[2];
+            return result;
         }
 
     };

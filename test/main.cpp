@@ -129,6 +129,50 @@ TEST(Vector2, Length) {
     EXPECT_NEAR(v.length(), 5.f, FLOAT_EPS);
 }
 
+TEST(Vector2fSIMD, ConstructorAlignmentAndArithmetic) {
+    EXPECT_EQ(alignof(Vector2f), 16u);
+    Vector2<float> ga(1.5f, -2.0f), gb(-0.5f, 5.0f);
+    Vector2f a(ga), b(gb);
+
+    expectNear(Vector2<float>(a + b), ga + gb, FLOAT_EPS);
+    expectNear(Vector2<float>(a - b), ga - gb, FLOAT_EPS);
+    expectNear(Vector2<float>(-a), -ga, FLOAT_EPS);
+    expectNear(Vector2<float>(a * 2.5f), ga * 2.5f, FLOAT_EPS);
+    expectNear(Vector2<float>(a / 2.0f), ga / 2.0f, FLOAT_EPS);
+}
+
+TEST(Vector2fSIMD, DotCrossNormalizeReflectMatchGeneric) {
+    Vector2<float> gv(3.0f, 4.0f), gu(0.0f, 1.0f);
+    Vector2f v(gv), u(gu);
+
+    EXPECT_NEAR(v.dot(u), gv.dot(gu), FLOAT_EPS);
+    EXPECT_NEAR(v.cross(u), gv.cross(gu), FLOAT_EPS);
+    expectNear(Vector2<float>(v.normalized()), gv.normalized(), FLOAT_EPS);
+    expectNear(Vector2<float>(v.reflected(u)), gv.reflected(gu), FLOAT_EPS);
+}
+
+TEST(Vector2dSIMD, ConstructorAlignmentAndArithmetic) {
+    EXPECT_EQ(alignof(Vector2d), 16u);
+    Vector2<double> ga(1.5, -2.0), gb(-0.5, 5.0);
+    Vector2d a(ga), b(gb);
+
+    expectNear(Vector2<double>(a + b), ga + gb, DOUBLE_EPS);
+    expectNear(Vector2<double>(a - b), ga - gb, DOUBLE_EPS);
+    expectNear(Vector2<double>(-a), -ga, DOUBLE_EPS);
+    expectNear(Vector2<double>(a * 2.5), ga * 2.5, DOUBLE_EPS);
+    expectNear(Vector2<double>(a / 2.0), ga / 2.0, DOUBLE_EPS);
+}
+
+TEST(Vector2dSIMD, DotCrossNormalizeReflectMatchGeneric) {
+    Vector2<double> gv(3.0, 4.0), gu(0.0, 1.0);
+    Vector2d v(gv), u(gu);
+
+    EXPECT_NEAR(v.dot(u), gv.dot(gu), DOUBLE_EPS);
+    EXPECT_NEAR(v.cross(u), gv.cross(gu), DOUBLE_EPS);
+    expectNear(Vector2<double>(v.normalized()), gv.normalized(), DOUBLE_EPS);
+    expectNear(Vector2<double>(v.reflected(u)), gv.reflected(gu), DOUBLE_EPS);
+}
+
 // ============================================================
 // Vector3
 // ============================================================
@@ -199,6 +243,118 @@ TEST(Vector3Double, CrossProduct) {
     EXPECT_NEAR(r.data[2], 1.0, DOUBLE_EPS);
 }
 
+TEST(Vector3fSIMD, ConstructorAlignmentAndPadding) {
+    EXPECT_EQ(alignof(Vector3f), 16u);
+    EXPECT_EQ(sizeof(Vector3f), 16u);
+    Vector3f v(1.0f, 2.0f, 3.0f);
+    EXPECT_EQ(v.data[0], 1.0f);
+    EXPECT_EQ(v.data[1], 2.0f);
+    EXPECT_EQ(v.data[2], 3.0f);
+    EXPECT_EQ(v.data[3], 0.0f);
+}
+
+TEST(Vector3fSIMD, ArithmeticMatchesGeneric) {
+    Vector3<float> ga(1.5f, -2.0f, 3.25f), gb(-0.5f, 5.0f, 1.75f);
+    Vector3f a(ga), b(gb);
+
+    expectNear(Vector3<float>(a + b), ga + gb, FLOAT_EPS);
+    expectNear(Vector3<float>(a - b), ga - gb, FLOAT_EPS);
+    expectNear(Vector3<float>(-a), -ga, FLOAT_EPS);
+    expectNear(Vector3<float>(a * 2.5f), ga * 2.5f, FLOAT_EPS);
+    expectNear(Vector3<float>(2.5f * a), 2.5f * ga, FLOAT_EPS);
+    expectNear(Vector3<float>(a / 2.0f), ga / 2.0f, FLOAT_EPS);
+}
+
+TEST(Vector3fSIMD, DotCrossAndLengthMatchGeneric) {
+    Vector3<float> ga(1.0f, 2.0f, 3.0f), gb(4.0f, -5.0f, 6.0f);
+    Vector3f a(ga), b(gb);
+
+    EXPECT_NEAR(a.dot(b), ga.dot(gb), FLOAT_EPS);
+    EXPECT_NEAR(Vector3f::dot(a, b), Vector3<float>::dot(ga, gb), FLOAT_EPS);
+    expectNear(Vector3<float>(Vector3f::cross(a, b)), Vector3<float>::cross(ga, gb), FLOAT_EPS);
+    EXPECT_NEAR(a.lengthSquared(), ga.lengthSquared(), FLOAT_EPS);
+    EXPECT_NEAR(a.length(), ga.length(), FLOAT_EPS);
+}
+
+TEST(Vector3fSIMD, NormalizeAndReflectMatchGeneric) {
+    Vector3<float> gv(0.0f, 3.0f, 4.0f);
+    Vector3f v(gv);
+    auto genericNormalized = gv.normalized();
+    auto simdNormalized = v.normalized();
+    expectNear(Vector3<float>(simdNormalized), genericNormalized, FLOAT_EPS);
+
+    Vector3<float> gn(0.0f, 1.0f, 0.0f);
+    Vector3f n(gn);
+    auto genericReflected = gv.reflected(gn);
+    auto simdReflected = v.reflected(n);
+    expectNear(Vector3<float>(simdReflected), genericReflected, FLOAT_EPS);
+}
+
+TEST(Vector3fSIMD, ZeroNormalizeIsNoop) {
+    Vector3f zero;
+    zero.normalize();
+    EXPECT_EQ(zero.data[0], 0.0f);
+    EXPECT_EQ(zero.data[1], 0.0f);
+    EXPECT_EQ(zero.data[2], 0.0f);
+    EXPECT_EQ(zero.data[3], 0.0f);
+}
+
+TEST(Vector3dSIMD, ConstructorAlignmentAndPadding) {
+    EXPECT_EQ(alignof(Vector3d), 32u);
+    EXPECT_EQ(sizeof(Vector3d), 32u);
+    Vector3d v(1.0, 2.0, 3.0);
+    EXPECT_EQ(v.data[0], 1.0);
+    EXPECT_EQ(v.data[1], 2.0);
+    EXPECT_EQ(v.data[2], 3.0);
+    EXPECT_EQ(v.data[3], 0.0);
+}
+
+TEST(Vector3dSIMD, ArithmeticMatchesGeneric) {
+    Vector3<double> ga(1.5, -2.0, 3.25), gb(-0.5, 5.0, 1.75);
+    Vector3d a(ga), b(gb);
+
+    expectNear(Vector3<double>(a + b), ga + gb, DOUBLE_EPS);
+    expectNear(Vector3<double>(a - b), ga - gb, DOUBLE_EPS);
+    expectNear(Vector3<double>(-a), -ga, DOUBLE_EPS);
+    expectNear(Vector3<double>(a * 2.5), ga * 2.5, DOUBLE_EPS);
+    expectNear(Vector3<double>(2.5 * a), 2.5 * ga, DOUBLE_EPS);
+    expectNear(Vector3<double>(a / 2.0), ga / 2.0, DOUBLE_EPS);
+}
+
+TEST(Vector3dSIMD, DotCrossAndLengthMatchGeneric) {
+    Vector3<double> ga(1.0, 2.0, 3.0), gb(4.0, -5.0, 6.0);
+    Vector3d a(ga), b(gb);
+
+    EXPECT_NEAR(a.dot(b), ga.dot(gb), DOUBLE_EPS);
+    EXPECT_NEAR(Vector3d::dot(a, b), Vector3<double>::dot(ga, gb), DOUBLE_EPS);
+    expectNear(Vector3<double>(Vector3d::cross(a, b)), Vector3<double>::cross(ga, gb), DOUBLE_EPS);
+    EXPECT_NEAR(a.lengthSquared(), ga.lengthSquared(), DOUBLE_EPS);
+    EXPECT_NEAR(a.length(), ga.length(), DOUBLE_EPS);
+}
+
+TEST(Vector3dSIMD, NormalizeAndReflectMatchGeneric) {
+    Vector3<double> gv(0.0, 3.0, 4.0);
+    Vector3d v(gv);
+    auto genericNormalized = gv.normalized();
+    auto simdNormalized = v.normalized();
+    expectNear(Vector3<double>(simdNormalized), genericNormalized, DOUBLE_EPS);
+
+    Vector3<double> gn(0.0, 1.0, 0.0);
+    Vector3d n(gn);
+    auto genericReflected = gv.reflected(gn);
+    auto simdReflected = v.reflected(n);
+    expectNear(Vector3<double>(simdReflected), genericReflected, DOUBLE_EPS);
+}
+
+TEST(Vector3dSIMD, ZeroNormalizeIsNoop) {
+    Vector3d zero;
+    zero.normalize();
+    EXPECT_EQ(zero.data[0], 0.0);
+    EXPECT_EQ(zero.data[1], 0.0);
+    EXPECT_EQ(zero.data[2], 0.0);
+    EXPECT_EQ(zero.data[3], 0.0);
+}
+
 // ============================================================
 // Vector4 / Vector4f / Vector4d
 // ============================================================
@@ -226,6 +382,73 @@ TEST(Vector4d, ConstructorAndAlignment) {
     EXPECT_EQ(v.data[1], 2.0);
     EXPECT_EQ(v.data[2], 3.0);
     EXPECT_EQ(v.data[3], 4.0);
+}
+
+TEST(Vector4fSIMD, ArithmeticMatchesGeneric) {
+    Vector4<float> ga(1.5f, -2.0f, 3.25f, 4.0f);
+    Vector4<float> gb(-0.5f, 5.0f, 1.75f, -2.0f);
+    Vector4f a(1.5f, -2.0f, 3.25f, 4.0f);
+    Vector4f b(-0.5f, 5.0f, 1.75f, -2.0f);
+
+    expectNear(a + b, ga + gb, FLOAT_EPS);
+    expectNear(a - b, ga - gb, FLOAT_EPS);
+    expectNear(-a, -ga, FLOAT_EPS);
+    expectNear(a * 2.5f, ga * 2.5f, FLOAT_EPS);
+    expectNear(2.5f * a, 2.5f * ga, FLOAT_EPS);
+    expectNear(a / 2.0f, ga / 2.0f, FLOAT_EPS);
+}
+
+TEST(Vector4fSIMD, DotMatchesGeneric) {
+    Vector4<float> ga(1.0f, 2.0f, 3.0f, 4.0f);
+    Vector4<float> gb(4.0f, 3.0f, 2.0f, 1.0f);
+    Vector4f a(1.0f, 2.0f, 3.0f, 4.0f);
+    Vector4f b(4.0f, 3.0f, 2.0f, 1.0f);
+
+    EXPECT_NEAR(a.dot(b), ga.dot(gb), FLOAT_EPS);
+    EXPECT_NEAR(Vector4f::dot(a, b), Vector4<float>::dot(ga, gb), FLOAT_EPS);
+}
+
+TEST(Vector4fSIMD, LengthNormalizeAndDistanceMatchGeneric) {
+    Vector4<float> gv(0.0f, 3.0f, 4.0f, 12.0f);
+    Vector4<float> gu(1.0f, -1.0f, 2.0f, 3.0f);
+    Vector4f v(0.0f, 3.0f, 4.0f, 12.0f);
+    Vector4f u(1.0f, -1.0f, 2.0f, 3.0f);
+
+    EXPECT_NEAR(v.lengthSquared(), gv.lengthSquared(), FLOAT_EPS);
+    EXPECT_NEAR(v.distanceToSquared(u), gv.distanceToSquared(gu), FLOAT_EPS);
+    expectNear(v.normalized(), gv.normalized(), FLOAT_EPS);
+}
+
+TEST(Vector4fSIMD, HelperOpsMatchGeneric) {
+    Vector4<float> ga(-1.5f, 2.5f, -3.5f, 4.5f);
+    Vector4<float> gb(0.5f, 3.0f, -4.0f, 2.0f);
+    Vector4f a(-1.5f, 2.5f, -3.5f, 4.5f);
+    Vector4f b(0.5f, 3.0f, -4.0f, 2.0f);
+
+    auto minGeneric = Vector4<float>::min(ga, gb);
+    auto maxGeneric = Vector4<float>::max(ga, gb);
+    expectNear(Vector4f::min(a, b), minGeneric, FLOAT_EPS);
+    expectNear(Vector4f::max(a, b), maxGeneric, FLOAT_EPS);
+    expectNear(Vector4f::lerp(a, b, 0.25f), Vector4<float>::lerp(ga, gb, 0.25f), FLOAT_EPS);
+
+    auto absGeneric = ga;
+    absGeneric.absolute();
+    a.absolute();
+    expectNear(a, absGeneric, FLOAT_EPS);
+
+    auto clampScalarGeneric = gb;
+    clampScalarGeneric.clamp(-1.0f, 2.5f);
+    b.clamp(-1.0f, 2.5f);
+    expectNear(b, clampScalarGeneric, FLOAT_EPS);
+
+    Vector4<float> gv(-2.0f, 0.0f, -5.0f, 1.0f);
+    Vector4<float> gw(1.0f, 2.0f, -1.0f, 3.0f);
+    Vector4<float> clampVecGeneric(-1.5f, 2.5f, -3.5f, 4.5f);
+    clampVecGeneric.clamp(gv, gw);
+    Vector4f clampVec(-1.5f, 2.5f, -3.5f, 4.5f);
+    clampVec.clamp(Vector4f(gv.data[0], gv.data[1], gv.data[2], gv.data[3]),
+                   Vector4f(gw.data[0], gw.data[1], gw.data[2], gw.data[3]));
+    expectNear(clampVec, clampVecGeneric, FLOAT_EPS);
 }
 
 // ============================================================
@@ -710,6 +933,49 @@ TEST(Vector4dSIMD, MatchesGenericAdd) {
         EXPECT_NEAR(simd.data[i], generic.data[i], DOUBLE_EPS);
 }
 
+TEST(Vector4dSIMD, LengthNormalizeAndDistanceMatchGeneric) {
+    Vector4<double> gv(0.0, 3.0, 4.0, 12.0);
+    Vector4<double> gu(1.0, -1.0, 2.0, 3.0);
+    Vector4d v(0.0, 3.0, 4.0, 12.0);
+    Vector4d u(1.0, -1.0, 2.0, 3.0);
+
+    EXPECT_NEAR(v.lengthSquared(), gv.lengthSquared(), DOUBLE_EPS);
+    EXPECT_NEAR(v.distanceToSquared(u), gv.distanceToSquared(gu), DOUBLE_EPS);
+    expectNear(v.normalized(), gv.normalized(), DOUBLE_EPS);
+}
+
+TEST(Vector4dSIMD, HelperOpsMatchGeneric) {
+    Vector4<double> ga(-1.5, 2.5, -3.5, 4.5);
+    Vector4<double> gb(0.5, 3.0, -4.0, 2.0);
+    Vector4d a(-1.5, 2.5, -3.5, 4.5);
+    Vector4d b(0.5, 3.0, -4.0, 2.0);
+
+    auto minGeneric = Vector4<double>::min(ga, gb);
+    auto maxGeneric = Vector4<double>::max(ga, gb);
+    expectNear(Vector4d::min(a, b), minGeneric, DOUBLE_EPS);
+    expectNear(Vector4d::max(a, b), maxGeneric, DOUBLE_EPS);
+    expectNear(Vector4d::lerp(a, b, 0.25), Vector4<double>::lerp(ga, gb, 0.25), DOUBLE_EPS);
+
+    auto absGeneric = ga;
+    absGeneric.absolute();
+    a.absolute();
+    expectNear(a, absGeneric, DOUBLE_EPS);
+
+    auto clampScalarGeneric = gb;
+    clampScalarGeneric.clamp(-1.0, 2.5);
+    b.clamp(-1.0, 2.5);
+    expectNear(b, clampScalarGeneric, DOUBLE_EPS);
+
+    Vector4<double> gv(-2.0, 0.0, -5.0, 1.0);
+    Vector4<double> gw(1.0, 2.0, -1.0, 3.0);
+    Vector4<double> clampVecGeneric(-1.5, 2.5, -3.5, 4.5);
+    clampVecGeneric.clamp(gv, gw);
+    Vector4d clampVec(-1.5, 2.5, -3.5, 4.5);
+    clampVec.clamp(Vector4d(gv.data[0], gv.data[1], gv.data[2], gv.data[3]),
+                   Vector4d(gw.data[0], gw.data[1], gw.data[2], gw.data[3]));
+    expectNear(clampVec, clampVecGeneric, DOUBLE_EPS);
+}
+
 // ============================================================
 // Matrix4d  –  SIMD add / subtract / negate / scalar-multiply
 // ============================================================
@@ -747,6 +1013,15 @@ TEST(Matrix4DoubleSIMD, ScalarMultiplyMatchesGeneric) {
         EXPECT_NEAR(simd.data[i], generic.data[i], DOUBLE_EPS) << "at index " << i;
 }
 
+TEST(Matrix4DoubleSIMD, ComposeMatchesGeneric) {
+    Vector3<double> t(3.0, 7.0, 11.0);
+    Vector3<double> axis(0.0, 1.0, 0.0);
+    Quaternion<double> r = Quaternion<double>::axisAngle(axis, M_PI * 0.5);
+    Vector3<double> s(2.0, 3.0, 4.0);
+
+    expectNear(Matrix4d::compose(t, r, s), Matrix4<double>::compose(t, r, s), DOUBLE_EPS);
+}
+
 // ============================================================
 // Matrix4f  –  SIMD ARM vector multiply (validates on all platforms)
 // ============================================================
@@ -757,6 +1032,40 @@ TEST(Matrix4FloatSIMD, VectorMultiplyMatchesGeneric) {
     auto simd    = Matrix4f(m) * Vector4f(v.data[0],v.data[1],v.data[2],v.data[3]);
     for (int i = 0; i < 4; i++)
         EXPECT_NEAR(simd.data[i], generic.data[i], FLOAT_EPS) << "at index " << i;
+}
+
+TEST(Matrix4FloatSIMD, AddSubtractNegateAndScaleMatchGeneric) {
+    float a[16] = {1,-2,3,-4,5,-6,7,-8,9,-10,11,-12,13,-14,15,-16};
+    float b[16] = {16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1};
+
+    expectNear(Matrix4f(a) + Matrix4f(b), Matrix4<float>(a) + Matrix4<float>(b), FLOAT_EPS);
+    expectNear(Matrix4f(a) - Matrix4f(b), Matrix4<float>(a) - Matrix4<float>(b), FLOAT_EPS);
+    expectNear(-Matrix4f(a), -(Matrix4<float>(a)), FLOAT_EPS);
+    expectNear(Matrix4f(a) * 3.0f, Matrix4<float>(a) * 3.0f, FLOAT_EPS);
+}
+
+TEST(Matrix4FloatSIMD, LookAtMatchesGeneric) {
+    Vector3<float> eye(1.0f, 2.0f, 3.0f), target(4.0f, 5.0f, 6.0f), up(0.0f, 1.0f, 0.0f);
+    expectNear(Matrix4f::lookAt(eye, target, up), Matrix4<float>::lookAt(eye, target, up), FLOAT_EPS);
+}
+
+TEST(Matrix4FloatSIMD, LookAtTranslationAlongForwardAxis) {
+    auto view = Matrix4f::lookAt(
+        Vector3<float>(0.0f, 0.0f, -5.0f),
+        Vector3<float>(0.0f, 0.0f, 0.0f),
+        Vector3<float>(0.0f, 1.0f, 0.0f)
+    );
+    EXPECT_NEAR(view.data[11], 5.0f, FLOAT_EPS);
+    EXPECT_NEAR(view.data[15], 1.0f, FLOAT_EPS);
+}
+
+TEST(Matrix4FloatSIMD, ComposeMatchesGeneric) {
+    Vector3<float> t(3.0f, 7.0f, 11.0f);
+    Vector3<float> axis(0.0f, 1.0f, 0.0f);
+    Quaternion<float> r = Quaternion<float>::axisAngle(axis, float(M_PI) * 0.5f);
+    Vector3<float> s(2.0f, 3.0f, 4.0f);
+
+    expectNear(Matrix4f::compose(t, r, s), Matrix4<float>::compose(t, r, s), FLOAT_EPS);
 }
 
 // ============================================================
@@ -783,6 +1092,122 @@ TEST(Quaternion, RotationPreservesLength) {
     auto r = R * v;
     float len = std::sqrt(r.data[0]*r.data[0] + r.data[1]*r.data[1] + r.data[2]*r.data[2]);
     EXPECT_NEAR(len, 1.f, FLOAT_EPS);
+}
+
+TEST(QuaternionfSIMD, ConstructorAndAlignment) {
+    EXPECT_EQ(alignof(Quaternionf), 16u);
+    Quaternionf q(1.0f, 2.0f, 3.0f, 4.0f);
+    EXPECT_EQ(q.data[0], 1.0f);
+    EXPECT_EQ(q.data[1], 2.0f);
+    EXPECT_EQ(q.data[2], 3.0f);
+    EXPECT_EQ(q.data[3], 4.0f);
+}
+
+TEST(QuaternionfSIMD, ArithmeticMatchesGeneric) {
+    Quaternion<float> ga(1.5f, -2.0f, 3.25f, 4.0f), gb(-0.5f, 5.0f, 1.75f, -2.0f);
+    Quaternionf a(ga), b(gb);
+
+    expectNear(a + b, ga + gb, FLOAT_EPS);
+    expectNear(a - b, ga - gb, FLOAT_EPS);
+    expectNear(-a, -ga, FLOAT_EPS);
+    expectNear(a * 2.5f, ga * 2.5f, FLOAT_EPS);
+    expectNear(2.5f * a, 2.5f * ga, FLOAT_EPS);
+}
+
+TEST(QuaternionfSIMD, HamiltonProductMatchesGeneric) {
+    Quaternion<float> ga(0.2f, 0.3f, 0.4f, 0.5f), gb(-0.1f, 0.6f, -0.2f, 0.7f);
+    Quaternionf a(ga), b(gb);
+    expectNear(a * b, ga * gb, FLOAT_EPS);
+}
+
+TEST(QuaternionfSIMD, DotConjugateAndInverseMatchGeneric) {
+    Quaternion<float> ga(0.2f, 0.3f, 0.4f, 0.5f), gb(-0.1f, 0.6f, -0.2f, 0.7f);
+    Quaternionf a(ga), b(gb);
+
+    EXPECT_NEAR(a.dot(b), ga.dot(gb), FLOAT_EPS);
+    EXPECT_NEAR(Quaternionf::dot(a, b), Quaternion<float>::dot(ga, gb), FLOAT_EPS);
+    expectNear(a.conjugated(), ga.conjugated(), FLOAT_EPS);
+    expectNear(a.inverted(), ga.inverted(), FLOAT_EPS);
+}
+
+TEST(QuaternionfSIMD, RotatedVectorMatchesGeneric) {
+    float s = std::sqrt(2.0f) / 2.0f;
+    Quaternion<float> gq(0.0f, s, 0.0f, s);
+    Quaternionf q(gq);
+    Vector3<float> gv(1.0f, 0.0f, 0.0f);
+    Vector3f v(gv);
+
+    expectNear(Vector3<float>(q.rotated(v)), gq.rotated(gv), FLOAT_EPS);
+}
+
+TEST(QuaternionfSIMD, IdentityAndAxisAngle) {
+    auto qIdentity = Quaternionf::identity();
+    EXPECT_NEAR(qIdentity.data[3], 1.0f, FLOAT_EPS);
+
+    Vector3f axis(0.0f, 1.0f, 0.0f);
+    auto q = Quaternionf::axisAngle(axis, float(M_PI) * 0.5f);
+    Vector3f v(1.0f, 0.0f, 0.0f);
+    auto rotated = q.rotated(v);
+    EXPECT_NEAR(rotated.data[0], 0.0f, 1e-4f);
+    EXPECT_NEAR(rotated.data[2], -1.0f, 1e-4f);
+}
+
+TEST(QuaterniondSIMD, ConstructorAndAlignment) {
+    EXPECT_EQ(alignof(Quaterniond), 32u);
+    Quaterniond q(1.0, 2.0, 3.0, 4.0);
+    EXPECT_EQ(q.data[0], 1.0);
+    EXPECT_EQ(q.data[1], 2.0);
+    EXPECT_EQ(q.data[2], 3.0);
+    EXPECT_EQ(q.data[3], 4.0);
+}
+
+TEST(QuaterniondSIMD, ArithmeticMatchesGeneric) {
+    Quaternion<double> ga(1.5, -2.0, 3.25, 4.0), gb(-0.5, 5.0, 1.75, -2.0);
+    Quaterniond a(ga), b(gb);
+
+    expectNear(a + b, ga + gb, DOUBLE_EPS);
+    expectNear(a - b, ga - gb, DOUBLE_EPS);
+    expectNear(-a, -ga, DOUBLE_EPS);
+    expectNear(a * 2.5, ga * 2.5, DOUBLE_EPS);
+    expectNear(2.5 * a, 2.5 * ga, DOUBLE_EPS);
+}
+
+TEST(QuaterniondSIMD, HamiltonProductMatchesGeneric) {
+    Quaternion<double> ga(0.2, 0.3, 0.4, 0.5), gb(-0.1, 0.6, -0.2, 0.7);
+    Quaterniond a(ga), b(gb);
+    expectNear(a * b, ga * gb, DOUBLE_EPS);
+}
+
+TEST(QuaterniondSIMD, DotConjugateAndInverseMatchGeneric) {
+    Quaternion<double> ga(0.2, 0.3, 0.4, 0.5), gb(-0.1, 0.6, -0.2, 0.7);
+    Quaterniond a(ga), b(gb);
+
+    EXPECT_NEAR(a.dot(b), ga.dot(gb), DOUBLE_EPS);
+    EXPECT_NEAR(Quaterniond::dot(a, b), Quaternion<double>::dot(ga, gb), DOUBLE_EPS);
+    expectNear(a.conjugated(), ga.conjugated(), DOUBLE_EPS);
+    expectNear(a.inverted(), ga.inverted(), DOUBLE_EPS);
+}
+
+TEST(QuaterniondSIMD, RotatedVectorMatchesGeneric) {
+    double s = std::sqrt(2.0) / 2.0;
+    Quaternion<double> gq(0.0, s, 0.0, s);
+    Quaterniond q(gq);
+    Vector3<double> gv(1.0, 0.0, 0.0);
+    Vector3d v(gv);
+
+    expectNear(Vector3<double>(q.rotated(v)), gq.rotated(gv), DOUBLE_EPS);
+}
+
+TEST(QuaterniondSIMD, IdentityAndAxisAngle) {
+    auto qIdentity = Quaterniond::identity();
+    EXPECT_NEAR(qIdentity.data[3], 1.0, DOUBLE_EPS);
+
+    Vector3d axis(0.0, 1.0, 0.0);
+    auto q = Quaterniond::axisAngle(axis, M_PI * 0.5);
+    Vector3d v(1.0, 0.0, 0.0);
+    auto rotated = q.rotated(v);
+    EXPECT_NEAR(rotated.data[0], 0.0, 1e-10);
+    EXPECT_NEAR(rotated.data[2], -1.0, 1e-10);
 }
 
 int main(int argc, char **argv) {

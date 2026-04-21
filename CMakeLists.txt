@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22.1)
 
-project(vector_math VERSION 0.3.5)
+project(vector_math VERSION 0.4.0)
 
 configure_file(src/vector_math_config.h.in vector_math_config.h)
 
@@ -11,22 +11,11 @@ include(CMakePackageConfigHelpers)
 
 message(STATUS ${CMAKE_SYSTEM_PROCESSOR})
 
-# enable avx simd extension for x86 processor family
-if (CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)|(x86_64)")
-    message(STATUS "Enabling AVX support")
-    if(MSVC AND NOT MSVC_VERSION LESS 1600)
-        message(STATUS "Enabling AVX2+FMA support for MSVC")
-        set( CMAKE_CXX_FLAGS "/arch:AVX2")
-    else()
-        message(STATUS "Enabling AVX+FMA support for gcc/clang")
-        set( CMAKE_CXX_FLAGS "-mavx -mfma")
-    endif()
-else ()
-endif ()
-
 option(VECTOR_MATH_BUILD_TEST "Enable building tests" OFF)
 
 option(VECTOR_MATH_BUILD_BENCHMARK "Enable building benchmark" OFF)
+
+option(VECTOR_MATH_ENABLE_AVX2 "Enable x86/x64 AVX2+FMA code generation for public headers and library targets" OFF)
 
 include_directories(inc)
 
@@ -41,6 +30,19 @@ target_include_directories(vector_math PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
+
+if (CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)|(x86_64)")
+    if (VECTOR_MATH_ENABLE_AVX2)
+        message(STATUS "Enabling AVX2+FMA support for x86/x64 builds")
+        if(MSVC AND NOT MSVC_VERSION LESS 1600)
+            target_compile_options(vector_math PUBLIC /arch:AVX2)
+        else()
+            target_compile_options(vector_math PUBLIC -mavx2 -mfma)
+        endif()
+    else()
+        message(STATUS "Building x86/x64 baseline without AVX2; AVX/AVX2 headers use scalar fallbacks unless the consumer enables those ISA targets")
+    endif()
+endif()
 
 # ── Install ───────────────────────────────────────────────────────────────────
 

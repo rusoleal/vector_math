@@ -8,7 +8,7 @@
 
 /// @defgroup arch Architecture Detection
 /// Compile-time architecture macros set by common.hpp.
-/// - `__VECTOR_MATH_ARCH_X86_X64` — defined on x86/x86-64; enables SSE/AVX paths.
+/// - `__VECTOR_MATH_ARCH_X86_X64` — defined on x86/x86-64; enables x86 SIMD code paths.
 /// - `__VECTOR_MATH_ARCH_ARM`     — defined on ARM/ARM64; enables NEON paths.
 
 #if defined(__x86__) || defined(__x86_64__) || defined(_M_IX86) || defined(_M_X64)

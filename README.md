@@ -15,7 +15,7 @@ Each module is designed to work standalone, but integrates seamlessly into the e
 
 - Generic vector and matrix templates (`Vec<T, N>`, `Mat<T, R, C>`)
 - Typed specializations: `Vector2`, `Vector3`, `Vector4`, `Matrix2`, `Matrix3`, `Matrix4`
-- SIMD-optimized `Matrix4f` (SSE) and `Matrix4d` (AVX) for performance-critical paths
+- SIMD-optimized float paths by default on x86/x64 (SSE) and optional AVX2-accelerated double paths on x86/x64
 - `Quaternion<T>` with Hamilton product, slerp, axis-angle, and vector rotation
 - Rich vector API: dot, cross, distance, angle, reflect, lerp, clamp, floor/ceil/round, component-wise ops
 - Rich matrix API: determinant, inverse, TRS compose/decompose helpers, row/column access
@@ -31,6 +31,13 @@ Each module is designed to work standalone, but integrates seamlessly into the e
 
 ```bash
 cmake -B build -S .
+make -C build
+```
+
+Enable AVX2 explicitly on x86/x64 when you want the wider double-precision SIMD paths:
+
+```bash
+cmake -B build -S . -DVECTOR_MATH_ENABLE_AVX2=ON
 make -C build
 ```
 
@@ -60,8 +67,8 @@ Architecture is detected automatically at compile time:
 
 | Architecture | Intrinsics | Types accelerated |
 |---|---|---|
-| x86/x64 | SSE / AVX (`-mavx`) | `Matrix4f` (SSE), `Matrix4d` (AVX) |
+| x86/x64 | SSE by default, AVX2+FMA optional via `-DVECTOR_MATH_ENABLE_AVX2=ON` | `Vector4f`, `Vector3f`, `Matrix4f` by default; `Vector4d`, `Vector3d`, `Matrix4d` use AVX when enabled |
 | AArch64 | NEON | `Matrix4f` (NEON), `Matrix4d` (NEON) |
 | ARM 32-bit | — | `Matrix4f` (scalar fallback), `Matrix4d` (scalar fallback) |
 
-`Vector4f` and `Matrix4f` use `alignas(16)` to satisfy SIMD alignment requirements.
+`Vector3f`/`Vector4f`/`Matrix4f` use `alignas(16)`. `Vector3d`/`Vector4d`/`Matrix4d` use `alignas(32)` for AVX-capable layouts.

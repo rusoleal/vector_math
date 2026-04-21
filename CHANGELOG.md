@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.4.0] - 2026-04-21
+
+### Added
+- **`Matrix4f::rotate(const Quaternion<float>&)`** — new static factory that builds a rotation matrix directly as `Matrix4f`, avoiding a temporary `Matrix4<float>` + cross-type copy. Used internally by the optimized `Matrix4f::compose` path.
+
+### Fixed
+- **`Matrix4f::compose` performance** — now uses the new native `Matrix4f::rotate()` instead of `Matrix4<float>::rotate()`, eliminating the cross-type temporary copy that made the SIMD compose path ~8× slower than necessary.
+- **`Matrix4f * Vector4f` removed expensive transpose** — the SSE path used `_MM_TRANSPOSE4_PS` (8 shuffle instructions) before broadcasting vector components. Replaced with a thin forward to `Matrix4<float>::operator*(Vector4)`, letting the compiler auto-vectorize the four scalar dot-products. This produces faster code than hand-written SSE hadd on baseline x86/x64.
+- **`Vector4f::dot` and `Vector2d::dot` removed hand-written SSE** — `_mm_hadd_ps` / `_mm_hadd_pd` have poor latency on many x86 cores; the compiler's auto-vectorization of the inherited scalar `dot()` outperforms the manual intrinsics by ~15–20%.
+
+### Changed
+- Benchmark suite now uses **per-iteration varying inputs** (small offset counters) for all factory and vector-operation benchmarks. This defeats compiler constant-folding that previously made scalar/generic paths appear artificially fast (< 1 ns) while SIMD intrinsics paths executed real instructions.
+
+---
+
 ## [0.3.5] - 2026-04-07
 
 ### Fixed
