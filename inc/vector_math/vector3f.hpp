@@ -183,10 +183,21 @@ namespace systems::leal::vector_math {
             #elif defined(__VECTOR_MATH_ARCH_ARM)
                 float32x4_t a = vld1q_f32(lhs.data);
                 float32x4_t b = vld1q_f32(rhs.data);
+                // vextq_f32 rotates all 4 lanes; we must fix lane 2 because Vector3f has w=0.
+                // a_yzx needs [y, z, x, _]  : vextq_f32(a,a,1) -> [y, z, w, x]; fix lane 2 -> x
                 float32x4_t a_yzx = vextq_f32(a, a, 1);
-                float32x4_t b_yzx = vextq_f32(b, b, 1);
-                float32x4_t a_zxy = vextq_f32(a, a, 2);
+                a_yzx = vsetq_lane_f32(vgetq_lane_f32(a, 0), a_yzx, 2);
+                // b_zxy needs [z, x, y, _]  : vextq_f32(b,b,2) -> [z, w, x, y]; fix lanes 1,2 -> x,y
                 float32x4_t b_zxy = vextq_f32(b, b, 2);
+                b_zxy = vsetq_lane_f32(vgetq_lane_f32(b, 0), b_zxy, 1);
+                b_zxy = vsetq_lane_f32(vgetq_lane_f32(b, 1), b_zxy, 2);
+                // a_zxy needs [z, x, y, _]  : vextq_f32(a,a,2) -> [z, w, x, y]; fix lanes 1,2 -> x,y
+                float32x4_t a_zxy = vextq_f32(a, a, 2);
+                a_zxy = vsetq_lane_f32(vgetq_lane_f32(a, 0), a_zxy, 1);
+                a_zxy = vsetq_lane_f32(vgetq_lane_f32(a, 1), a_zxy, 2);
+                // b_yzx needs [y, z, x, _]  : vextq_f32(b,b,1) -> [y, z, w, x]; fix lane 2 -> x
+                float32x4_t b_yzx = vextq_f32(b, b, 1);
+                b_yzx = vsetq_lane_f32(vgetq_lane_f32(b, 0), b_yzx, 2);
                 Vector3f result;
                 vst1q_f32(result.data, vsubq_f32(vmulq_f32(a_yzx, b_zxy), vmulq_f32(a_zxy, b_yzx)));
                 result.data[3] = 0.0f;
