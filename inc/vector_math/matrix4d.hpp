@@ -178,16 +178,9 @@ namespace systems::leal::vector_math
         }
 
         /// Component-wise addition using SIMD intrinsics.
-        /// x86: 4 AVX 256-bit loads/adds/stores (one per row). AArch64: 8 NEON 128-bit ops.
+        /// AArch64: 8 NEON 128-bit ops. x86: auto-vectorized scalar fallback matches hand-written AVX.
         inline Matrix4d operator+(const Matrix4d& rhs) const {
-            #if defined(__VECTOR_MATH_ARCH_X86_X64) && defined(__AVX__)
-                Matrix4d result;
-                _mm256_store_pd(&result.data[0],  _mm256_add_pd(_mm256_load_pd(&this->data[0]),  _mm256_load_pd(&rhs.data[0])));
-                _mm256_store_pd(&result.data[4],  _mm256_add_pd(_mm256_load_pd(&this->data[4]),  _mm256_load_pd(&rhs.data[4])));
-                _mm256_store_pd(&result.data[8],  _mm256_add_pd(_mm256_load_pd(&this->data[8]),  _mm256_load_pd(&rhs.data[8])));
-                _mm256_store_pd(&result.data[12], _mm256_add_pd(_mm256_load_pd(&this->data[12]), _mm256_load_pd(&rhs.data[12])));
-                return result;
-            #elif defined(__VECTOR_MATH_ARCH_ARM) && (defined(__arm64__) || defined(__aarch64__))
+            #if defined(__VECTOR_MATH_ARCH_ARM) && (defined(__arm64__) || defined(__aarch64__))
                 Matrix4d result;
                 for (int i = 0; i < 16; i += 2) {
                     vst1q_f64(&result.data[i],
@@ -202,14 +195,7 @@ namespace systems::leal::vector_math
 
         /// Component-wise subtraction using SIMD intrinsics.
         inline Matrix4d operator-(const Matrix4d& rhs) const {
-            #if defined(__VECTOR_MATH_ARCH_X86_X64) && defined(__AVX__)
-                Matrix4d result;
-                _mm256_store_pd(&result.data[0],  _mm256_sub_pd(_mm256_load_pd(&this->data[0]),  _mm256_load_pd(&rhs.data[0])));
-                _mm256_store_pd(&result.data[4],  _mm256_sub_pd(_mm256_load_pd(&this->data[4]),  _mm256_load_pd(&rhs.data[4])));
-                _mm256_store_pd(&result.data[8],  _mm256_sub_pd(_mm256_load_pd(&this->data[8]),  _mm256_load_pd(&rhs.data[8])));
-                _mm256_store_pd(&result.data[12], _mm256_sub_pd(_mm256_load_pd(&this->data[12]), _mm256_load_pd(&rhs.data[12])));
-                return result;
-            #elif defined(__VECTOR_MATH_ARCH_ARM) && (defined(__arm64__) || defined(__aarch64__))
+            #if defined(__VECTOR_MATH_ARCH_ARM) && (defined(__arm64__) || defined(__aarch64__))
                 Matrix4d result;
                 for (int i = 0; i < 16; i += 2) {
                     vst1q_f64(&result.data[i],
@@ -224,15 +210,7 @@ namespace systems::leal::vector_math
 
         /// Negation using SIMD intrinsics (flips sign bit via XOR with -0.0).
         inline Matrix4d operator-() const {
-            #if defined(__VECTOR_MATH_ARCH_X86_X64) && defined(__AVX__)
-                Matrix4d result;
-                __m256d sign_mask = _mm256_set1_pd(-0.0);
-                _mm256_store_pd(&result.data[0],  _mm256_xor_pd(_mm256_load_pd(&this->data[0]),  sign_mask));
-                _mm256_store_pd(&result.data[4],  _mm256_xor_pd(_mm256_load_pd(&this->data[4]),  sign_mask));
-                _mm256_store_pd(&result.data[8],  _mm256_xor_pd(_mm256_load_pd(&this->data[8]),  sign_mask));
-                _mm256_store_pd(&result.data[12], _mm256_xor_pd(_mm256_load_pd(&this->data[12]), sign_mask));
-                return result;
-            #elif defined(__VECTOR_MATH_ARCH_ARM) && (defined(__arm64__) || defined(__aarch64__))
+            #if defined(__VECTOR_MATH_ARCH_ARM) && (defined(__arm64__) || defined(__aarch64__))
                 Matrix4d result;
                 for (int i = 0; i < 16; i += 2)
                     vst1q_f64(&result.data[i], vnegq_f64(vld1q_f64(&this->data[i])));
@@ -245,15 +223,7 @@ namespace systems::leal::vector_math
 
         /// Scalar multiplication using SIMD intrinsics.
         inline Matrix4d operator*(double scalar) const {
-            #if defined(__VECTOR_MATH_ARCH_X86_X64) && defined(__AVX__)
-                Matrix4d result;
-                __m256d s = _mm256_set1_pd(scalar);
-                _mm256_store_pd(&result.data[0],  _mm256_mul_pd(_mm256_load_pd(&this->data[0]),  s));
-                _mm256_store_pd(&result.data[4],  _mm256_mul_pd(_mm256_load_pd(&this->data[4]),  s));
-                _mm256_store_pd(&result.data[8],  _mm256_mul_pd(_mm256_load_pd(&this->data[8]),  s));
-                _mm256_store_pd(&result.data[12], _mm256_mul_pd(_mm256_load_pd(&this->data[12]), s));
-                return result;
-            #elif defined(__VECTOR_MATH_ARCH_ARM) && (defined(__arm64__) || defined(__aarch64__))
+            #if defined(__VECTOR_MATH_ARCH_ARM) && (defined(__arm64__) || defined(__aarch64__))
                 Matrix4d result;
                 for (int i = 0; i < 16; i += 2)
                     vst1q_f64(&result.data[i], vmulq_n_f64(vld1q_f64(&this->data[i]), scalar));
@@ -302,12 +272,7 @@ namespace systems::leal::vector_math
         static inline Matrix4d compose(const Vector3<double>& translation, const Quaternion<double>& rotation, const Vector3<double>& scaleVec)
         {
             Matrix4d result(Matrix4<double>::rotate(rotation));
-            #if defined(__VECTOR_MATH_ARCH_X86_X64) && defined(__AVX__)
-                __m256d scale = _mm256_set_pd(1.0, scaleVec.data[2], scaleVec.data[1], scaleVec.data[0]);
-                _mm256_store_pd(&result.data[0], _mm256_mul_pd(_mm256_load_pd(&result.data[0]), scale));
-                _mm256_store_pd(&result.data[4], _mm256_mul_pd(_mm256_load_pd(&result.data[4]), scale));
-                _mm256_store_pd(&result.data[8], _mm256_mul_pd(_mm256_load_pd(&result.data[8]), scale));
-            #elif defined(__VECTOR_MATH_ARCH_ARM) && (defined(__arm64__) || defined(__aarch64__))
+            #if defined(__VECTOR_MATH_ARCH_ARM) && (defined(__arm64__) || defined(__aarch64__))
                 float64x2_t scale_lo = { scaleVec.data[0], scaleVec.data[1] };
                 float64x2_t scale_hi = { scaleVec.data[2], 1.0 };
                 for (int row = 0; row < 3; ++row) {

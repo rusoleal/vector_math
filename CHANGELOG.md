@@ -1,5 +1,15 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+- **`Vector4d` removed hand-written AVX intrinsics** from `operator+`, `operator-`, unary `operator-`, `operator*(scalar)`, `operator/(scalar)`, `dot()`, `min()`, `max()`, and `lerp()`. The compiler's auto-vectorization of the scalar fallback produces equivalent or better code, matching findings in `Vector4f` and `Matrix4f`. `dot()` scalar fallback now delegates to `Vector4<double>::dot(rhs)` instead of repeating the arithmetic inline.
+- **`Matrix4d` removed hand-written AVX intrinsics** from `operator+`, `operator-`, unary `operator-`, `operator*(scalar)`, and `compose()`. ARM NEON paths are unchanged.
+- **`Matrix4f::compose` ARM guard tightened** — the NEON path now requires `__arm64__ || __aarch64__` (AArch64 only), matching the pattern already used in `Matrix4d`. Prevents a potential build failure on 32-bit ARMv7.
+- **Benchmark scripts** (`launch_benchmark.sh` / `launch_benchmark.bat`) now pass `-DVECTOR_MATH_ENABLE_AVX2=ON` to CMake so the compiler can use AVX2 when auto-vectorizing.
+
+---
+
 ## [0.4.0] - 2026-04-21
 
 ### Added

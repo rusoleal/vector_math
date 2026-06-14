@@ -266,12 +266,7 @@ namespace systems::leal::vector_math
         static inline Matrix4f compose(const Vector3<float>& translation, const Quaternion<float>& rotation, const Vector3<float>& scaleVec)
         {
             Matrix4f result = Matrix4f::rotate(rotation);
-            #ifdef __VECTOR_MATH_ARCH_X86_X64
-                __m128 scale = _mm_set_ps(1.0f, scaleVec.data[2], scaleVec.data[1], scaleVec.data[0]);
-                _mm_store_ps(&result.data[0], _mm_mul_ps(_mm_load_ps(&result.data[0]), scale));
-                _mm_store_ps(&result.data[4], _mm_mul_ps(_mm_load_ps(&result.data[4]), scale));
-                _mm_store_ps(&result.data[8], _mm_mul_ps(_mm_load_ps(&result.data[8]), scale));
-            #elif defined(__VECTOR_MATH_ARCH_ARM)
+            #if defined(__VECTOR_MATH_ARCH_ARM) && (defined(__arm64__) || defined(__aarch64__))
                 float32x4_t scale = { scaleVec.data[0], scaleVec.data[1], scaleVec.data[2], 1.0f };
                 vst1q_f32(&result.data[0], vmulq_f32(vld1q_f32(&result.data[0]), scale));
                 vst1q_f32(&result.data[4], vmulq_f32(vld1q_f32(&result.data[4]), scale));
