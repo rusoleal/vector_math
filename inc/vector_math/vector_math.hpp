@@ -10,6 +10,7 @@
 #include <vector_math/matrix4.hpp>
 #include <vector_math/matrix4f.hpp>
 #include <vector_math/matrix4d.hpp>
+#include <vector_math/batch_transform.hpp>
 
 /// @file vector_math.hpp
 /// @brief Main entry point for the vector_math library.

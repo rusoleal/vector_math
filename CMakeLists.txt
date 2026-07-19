@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22.1)
 
-project(vector_math VERSION 0.4.0)
+project(vector_math VERSION 0.5.0)
 
 configure_file(src/vector_math_config.h.in vector_math_config.h)
 
@@ -23,6 +23,7 @@ message(STATUS "Building ${PROJECT_NAME}...")
 
 add_library(${PROJECT_NAME}
     src/vector_math.cpp
+    src/batch_transform.cpp
 )
 
 target_include_directories(vector_math PUBLIC
@@ -32,6 +33,16 @@ target_include_directories(vector_math PUBLIC
 )
 
 if (CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)|(x86_64)")
+    # Runtime-dispatched AVX2 batch kernels. Compiled into their own TU so the
+    # rest of the library can stay at the baseline ISA while still using AVX2
+    # when the CPU supports it.
+    target_sources(${PROJECT_NAME} PRIVATE src/batch_transform_avx2.cpp)
+    if(MSVC AND NOT MSVC_VERSION LESS 1600)
+        set_source_files_properties(src/batch_transform_avx2.cpp PROPERTIES COMPILE_OPTIONS "/arch:AVX2")
+    else()
+        set_source_files_properties(src/batch_transform_avx2.cpp PROPERTIES COMPILE_OPTIONS "-mavx2;-mfma")
+    endif()
+
     if (VECTOR_MATH_ENABLE_AVX2)
         message(STATUS "Enabling AVX2+FMA support for x86/x64 builds")
         if(MSVC AND NOT MSVC_VERSION LESS 1600)
@@ -40,7 +51,7 @@ if (CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)|(x86_64)")
             target_compile_options(vector_math PUBLIC -mavx2 -mfma)
         endif()
     else()
-        message(STATUS "Building x86/x64 baseline without AVX2; AVX/AVX2 headers use scalar fallbacks unless the consumer enables those ISA targets")
+        message(STATUS "Building x86/x64 baseline without global AVX2; batch transform uses runtime-dispatched AVX2 path")
     endif()
 endif()
 

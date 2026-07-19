@@ -11,6 +11,7 @@
 #include <vector_math/quaternionf.hpp>
 #include <vector_math/quaterniond.hpp>
 #include <vector_math/quaternion.hpp>
+#include <vector_math/batch_transform.hpp>
 
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
@@ -179,6 +180,58 @@ static void BM_GLM_MatrixByVector(benchmark::State& state) {
     }
 }
 BENCHMARK(BM_GLM_MatrixByVector);
+
+////////////////////////
+// Batch transform    //
+////////////////////////
+static void BM_BatchTransformVector4f(benchmark::State& state) {
+    Matrix4f m = Matrix4f::perspective(glm::pi<float>() * 0.25f, 4.0f / 3.0f, 0.1f, 100.0f);
+    std::size_t n = static_cast<std::size_t>(state.range(0));
+    std::vector<Vector4f> in(n);
+    std::vector<Vector4f> out(n);
+    for (std::size_t i = 0; i < n; ++i)
+        in[i] = Vector4f(static_cast<float>(i), static_cast<float>(i) * 0.5f, static_cast<float>(i) * 0.25f, 1.0f);
+
+    for (auto _ : state) {
+        transformVectors(m, in.data(), out.data(), n);
+        benchmark::DoNotOptimize(out.data());
+    }
+    state.SetItemsProcessed(static_cast<int64_t>(n * state.iterations()));
+}
+BENCHMARK(BM_BatchTransformVector4f)->Arg(64)->Arg(512)->Arg(4096);
+
+static void BM_BatchTransformVector4d(benchmark::State& state) {
+    Matrix4d m = Matrix4d::perspective(glm::pi<double>() * 0.25, 4.0 / 3.0, 0.1, 100.0);
+    std::size_t n = static_cast<std::size_t>(state.range(0));
+    std::vector<Vector4d> in(n);
+    std::vector<Vector4d> out(n);
+    for (std::size_t i = 0; i < n; ++i)
+        in[i] = Vector4d(static_cast<double>(i), static_cast<double>(i) * 0.5, static_cast<double>(i) * 0.25, 1.0);
+
+    for (auto _ : state) {
+        transformVectors(m, in.data(), out.data(), n);
+        benchmark::DoNotOptimize(out.data());
+    }
+    state.SetItemsProcessed(static_cast<int64_t>(n * state.iterations()));
+}
+BENCHMARK(BM_BatchTransformVector4d)->Arg(64)->Arg(512)->Arg(4096);
+
+static void BM_BatchTransformVector4dScalarBaseline(benchmark::State& state) {
+    Matrix4<double> m = Matrix4<double>::perspective(glm::pi<double>() * 0.25, 4.0 / 3.0, 0.1, 100.0);
+    std::size_t n = static_cast<std::size_t>(state.range(0));
+    std::vector<Vector4<double>> in(n);
+    std::vector<Vector4<double>> out(n);
+    for (std::size_t i = 0; i < n; ++i)
+        in[i] = Vector4<double>(static_cast<double>(i), static_cast<double>(i) * 0.5, static_cast<double>(i) * 0.25, 1.0);
+
+    for (auto _ : state) {
+        for (std::size_t i = 0; i < n; ++i)
+            out[i] = m * in[i];
+        benchmark::DoNotOptimize(out.data());
+    }
+    state.SetItemsProcessed(static_cast<int64_t>(n * state.iterations()));
+}
+BENCHMARK(BM_BatchTransformVector4dScalarBaseline)->Arg(64)->Arg(512)->Arg(4096);
 
 ////////////////////
 // LookAt         //

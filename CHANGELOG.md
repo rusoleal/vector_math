@@ -2,11 +2,20 @@
 
 ## [Unreleased]
 
+---
+
+## [0.5.0] - 2026-07-18
+
+### Added
+- **AVX paths for double-precision SIMD types on x86/x64**: `Vector4d` now uses AVX for `operator+`, `operator-`, unary `operator-`, `operator*(scalar)`, `operator/(scalar)`, `dot()`, `min()`, `max()`, and `lerp()`. `Matrix4d` uses AVX for component-wise `operator+`, `operator-`, unary `operator-`, and `operator*(scalar)`. `Quaterniond` uses AVX2 for the Hamilton product `operator*`. These paths activate when the translation unit is compiled with AVX/AVX2 support (e.g. `-mavx`/`-mavx2` or `-DVECTOR_MATH_ENABLE_AVX2=ON`).
+- **Runtime CPU feature helpers** in `common.hpp`: `cpuSupportsAVX()` and `cpuSupportsAVX2()` for consumers that want to query x86/x64 SIMD capabilities at runtime.
+- **Batch matrix-vector transform with runtime SIMD dispatch**: new `transformVectors(const Matrix4f&, ...)` and `transformVectors(const Matrix4d&, ...)` functions in `batch_transform.hpp`. On x86/x64 they dispatch at runtime between a scalar TU and an AVX2+FMA TU compiled into `src/batch_transform_avx2.cpp`; on other platforms the scalar path is used. The AVX2 kernels transpose AoS input to SoA internally to process 8 `Vector4f` or 4 `Vector4d` per iteration.
+- **Benchmarks** for `transformVectors` on `Vector4f` and `Vector4d`, plus a scalar baseline for comparison.
+- **Unit tests** for batch transform correctness, empty input handling, and in-place transforms.
+
 ### Changed
-- **`Vector4d` removed hand-written AVX intrinsics** from `operator+`, `operator-`, unary `operator-`, `operator*(scalar)`, `operator/(scalar)`, `dot()`, `min()`, `max()`, and `lerp()`. The compiler's auto-vectorization of the scalar fallback produces equivalent or better code, matching findings in `Vector4f` and `Matrix4f`. `dot()` scalar fallback now delegates to `Vector4<double>::dot(rhs)` instead of repeating the arithmetic inline.
-- **`Matrix4d` removed hand-written AVX intrinsics** from `operator+`, `operator-`, unary `operator-`, `operator*(scalar)`, and `compose()`. ARM NEON paths are unchanged.
-- **`Matrix4f::compose` ARM guard tightened** — the NEON path now requires `__arm64__ || __aarch64__` (AArch64 only), matching the pattern already used in `Matrix4d`. Prevents a potential build failure on 32-bit ARMv7.
-- **Benchmark scripts** (`launch_benchmark.sh` / `launch_benchmark.bat`) now pass `-DVECTOR_MATH_ENABLE_AVX2=ON` to CMake so the compiler can use AVX2 when auto-vectorizing.
+- `vector_math/vector_math.hpp` now includes `vector_math/batch_transform.hpp`.
+- **ARM NEON inline operators restricted to AArch64** — all single-precision NEON paths in `Vector2f`, `Vector3f`, `Vector4f`, `Matrix4f`, and `Quaternionf` now require `defined(__arm64__) || defined(__aarch64__)`. ARMv7 (`armeabi-v7a`) falls back to the scalar implementation, matching the existing double-precision behavior and preventing illegal-instruction crashes on CPUs without NEON or with only the 32-bit NEON subset.
 
 ---
 

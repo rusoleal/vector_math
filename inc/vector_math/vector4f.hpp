@@ -35,7 +35,7 @@ namespace systems::leal::vector_math {
                 _mm_store_ps(result.data,
                     _mm_add_ps(_mm_load_ps(this->data), _mm_load_ps(rhs.data)));
                 return result;
-            #elif defined(__VECTOR_MATH_ARCH_ARM)
+            #elif defined(__VECTOR_MATH_ARCH_ARM) && (defined(__arm64__) || defined(__aarch64__))
                 Vector4f result;
                 vst1q_f32(result.data,
                     vaddq_f32(vld1q_f32(this->data), vld1q_f32(rhs.data)));
@@ -55,7 +55,7 @@ namespace systems::leal::vector_math {
                 _mm_store_ps(result.data,
                     _mm_sub_ps(_mm_load_ps(this->data), _mm_load_ps(rhs.data)));
                 return result;
-            #elif defined(__VECTOR_MATH_ARCH_ARM)
+            #elif defined(__VECTOR_MATH_ARCH_ARM) && (defined(__arm64__) || defined(__aarch64__))
                 Vector4f result;
                 vst1q_f32(result.data,
                     vsubq_f32(vld1q_f32(this->data), vld1q_f32(rhs.data)));
@@ -75,7 +75,7 @@ namespace systems::leal::vector_math {
                 _mm_store_ps(result.data,
                     _mm_xor_ps(_mm_load_ps(this->data), _mm_set1_ps(-0.0f)));
                 return result;
-            #elif defined(__VECTOR_MATH_ARCH_ARM)
+            #elif defined(__VECTOR_MATH_ARCH_ARM) && (defined(__arm64__) || defined(__aarch64__))
                 Vector4f result;
                 vst1q_f32(result.data, vnegq_f32(vld1q_f32(this->data)));
                 return result;
@@ -91,7 +91,7 @@ namespace systems::leal::vector_math {
                 _mm_store_ps(result.data,
                     _mm_mul_ps(_mm_load_ps(this->data), _mm_set1_ps(scalar)));
                 return result;
-            #elif defined(__VECTOR_MATH_ARCH_ARM)
+            #elif defined(__VECTOR_MATH_ARCH_ARM) && (defined(__arm64__) || defined(__aarch64__))
                 Vector4f result;
                 vst1q_f32(result.data, vmulq_n_f32(vld1q_f32(this->data), scalar));
                 return result;
@@ -113,7 +113,7 @@ namespace systems::leal::vector_math {
                 _mm_store_ps(result.data,
                     _mm_div_ps(_mm_load_ps(this->data), _mm_set1_ps(scalar)));
                 return result;
-            #elif defined(__VECTOR_MATH_ARCH_ARM)
+            #elif defined(__VECTOR_MATH_ARCH_ARM) && (defined(__arm64__) || defined(__aarch64__))
                 Vector4f result;
                 float inv = 1.0f / scalar;
                 vst1q_f32(result.data, vmulq_n_f32(vld1q_f32(this->data), inv));
@@ -156,7 +156,7 @@ namespace systems::leal::vector_math {
                 __m128 value = _mm_load_ps(this->data);
                 __m128 mask = _mm_castsi128_ps(_mm_set1_epi32(0x7fffffff));
                 _mm_store_ps(this->data, _mm_and_ps(value, mask));
-            #elif defined(__VECTOR_MATH_ARCH_ARM)
+            #elif defined(__VECTOR_MATH_ARCH_ARM) && (defined(__arm64__) || defined(__aarch64__))
                 vst1q_f32(this->data, vabsq_f32(vld1q_f32(this->data)));
             #else
                 this->data[0] = std::abs(this->data[0]);
@@ -173,7 +173,7 @@ namespace systems::leal::vector_math {
                 __m128 minV = _mm_set1_ps(minVal);
                 __m128 maxV = _mm_set1_ps(maxVal);
                 _mm_store_ps(this->data, _mm_min_ps(_mm_max_ps(value, minV), maxV));
-            #elif defined(__VECTOR_MATH_ARCH_ARM)
+            #elif defined(__VECTOR_MATH_ARCH_ARM) && (defined(__arm64__) || defined(__aarch64__))
                 float32x4_t value = vld1q_f32(this->data);
                 float32x4_t minV = vdupq_n_f32(minVal);
                 float32x4_t maxV = vdupq_n_f32(maxVal);
@@ -193,7 +193,7 @@ namespace systems::leal::vector_math {
                 __m128 minV = _mm_load_ps(minVec.data);
                 __m128 maxV = _mm_load_ps(maxVec.data);
                 _mm_store_ps(this->data, _mm_min_ps(_mm_max_ps(value, minV), maxV));
-            #elif defined(__VECTOR_MATH_ARCH_ARM)
+            #elif defined(__VECTOR_MATH_ARCH_ARM) && (defined(__arm64__) || defined(__aarch64__))
                 float32x4_t value = vld1q_f32(this->data);
                 float32x4_t minV = vld1q_f32(minVec.data);
                 float32x4_t maxV = vld1q_f32(maxVec.data);
@@ -212,7 +212,7 @@ namespace systems::leal::vector_math {
                 Vector4f result;
                 _mm_store_ps(result.data, _mm_min_ps(_mm_load_ps(a.data), _mm_load_ps(b.data)));
                 return result;
-            #elif defined(__VECTOR_MATH_ARCH_ARM)
+            #elif defined(__VECTOR_MATH_ARCH_ARM) && (defined(__arm64__) || defined(__aarch64__))
                 Vector4f result;
                 vst1q_f32(result.data, vminq_f32(vld1q_f32(a.data), vld1q_f32(b.data)));
                 return result;
@@ -232,7 +232,7 @@ namespace systems::leal::vector_math {
                 Vector4f result;
                 _mm_store_ps(result.data, _mm_max_ps(_mm_load_ps(a.data), _mm_load_ps(b.data)));
                 return result;
-            #elif defined(__VECTOR_MATH_ARCH_ARM)
+            #elif defined(__VECTOR_MATH_ARCH_ARM) && (defined(__arm64__) || defined(__aarch64__))
                 Vector4f result;
                 vst1q_f32(result.data, vmaxq_f32(vld1q_f32(a.data), vld1q_f32(b.data)));
                 return result;
@@ -255,7 +255,7 @@ namespace systems::leal::vector_math {
                 __m128 tv = _mm_set1_ps(t);
                 _mm_store_ps(result.data, _mm_add_ps(av, _mm_mul_ps(tv, _mm_sub_ps(bv, av))));
                 return result;
-            #elif defined(__VECTOR_MATH_ARCH_ARM)
+            #elif defined(__VECTOR_MATH_ARCH_ARM) && (defined(__arm64__) || defined(__aarch64__))
                 Vector4f result;
                 float32x4_t av = vld1q_f32(a.data);
                 float32x4_t bv = vld1q_f32(b.data);

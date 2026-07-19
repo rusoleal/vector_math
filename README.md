@@ -16,6 +16,8 @@ Each module is designed to work standalone, but integrates seamlessly into the e
 - Generic vector and matrix templates (`Vec<T, N>`, `Mat<T, R, C>`)
 - Typed specializations: `Vector2`, `Vector3`, `Vector4`, `Matrix2`, `Matrix3`, `Matrix4`
 - SIMD-optimized float paths by default on x86/x64 (SSE) and optional AVX2-accelerated double paths on x86/x64
+- Runtime CPU feature detection (`cpuSupportsAVX()`, `cpuSupportsAVX2()`)
+- Batch matrix-vector transform (`transformVectors`) with runtime AVX2 dispatch on x86/x64
 - `Quaternion<T>` with Hamilton product, slerp, axis-angle, and vector rotation
 - Rich vector API: dot, cross, distance, angle, reflect, lerp, clamp, floor/ceil/round, component-wise ops
 - Rich matrix API: determinant, inverse, TRS compose/decompose helpers, row/column access
@@ -68,6 +70,7 @@ Architecture is detected automatically at compile time:
 | Architecture | Intrinsics | Types accelerated |
 |---|---|---|
 | x86/x64 | SSE by default, AVX2+FMA optional via `-DVECTOR_MATH_ENABLE_AVX2=ON` | `Vector4f`, `Vector3f`, `Matrix4f` by default; `Vector4d`, `Vector3d`, `Matrix4d` use AVX when enabled |
+| x86/x64 | Runtime-dispatched AVX2+FMA | `transformVectors` batch transform uses AVX2 when available, scalar otherwise |
 | AArch64 | NEON | `Matrix4f` (NEON), `Matrix4d` (NEON) |
 | ARM 32-bit | — | `Matrix4f` (scalar fallback), `Matrix4d` (scalar fallback) |
 

@@ -52,7 +52,7 @@ namespace systems::leal::vector_math {
                 _mm_store_ps(result.data, _mm_add_ps(_mm_load_ps(data), _mm_load_ps(rhs.data)));
                 result.data[3] = 0.0f;
                 return result;
-            #elif defined(__VECTOR_MATH_ARCH_ARM)
+            #elif defined(__VECTOR_MATH_ARCH_ARM) && (defined(__arm64__) || defined(__aarch64__))
                 Vector3f result;
                 vst1q_f32(result.data, vaddq_f32(vld1q_f32(data), vld1q_f32(rhs.data)));
                 result.data[3] = 0.0f;
@@ -68,7 +68,7 @@ namespace systems::leal::vector_math {
                 _mm_store_ps(result.data, _mm_sub_ps(_mm_load_ps(data), _mm_load_ps(rhs.data)));
                 result.data[3] = 0.0f;
                 return result;
-            #elif defined(__VECTOR_MATH_ARCH_ARM)
+            #elif defined(__VECTOR_MATH_ARCH_ARM) && (defined(__arm64__) || defined(__aarch64__))
                 Vector3f result;
                 vst1q_f32(result.data, vsubq_f32(vld1q_f32(data), vld1q_f32(rhs.data)));
                 result.data[3] = 0.0f;
@@ -84,7 +84,7 @@ namespace systems::leal::vector_math {
                 _mm_store_ps(result.data, _mm_xor_ps(_mm_load_ps(data), _mm_set1_ps(-0.0f)));
                 result.data[3] = 0.0f;
                 return result;
-            #elif defined(__VECTOR_MATH_ARCH_ARM)
+            #elif defined(__VECTOR_MATH_ARCH_ARM) && (defined(__arm64__) || defined(__aarch64__))
                 Vector3f result;
                 vst1q_f32(result.data, vnegq_f32(vld1q_f32(data)));
                 result.data[3] = 0.0f;
@@ -100,7 +100,7 @@ namespace systems::leal::vector_math {
                 _mm_store_ps(result.data, _mm_mul_ps(_mm_load_ps(data), _mm_set1_ps(scalar)));
                 result.data[3] = 0.0f;
                 return result;
-            #elif defined(__VECTOR_MATH_ARCH_ARM)
+            #elif defined(__VECTOR_MATH_ARCH_ARM) && (defined(__arm64__) || defined(__aarch64__))
                 Vector3f result;
                 vst1q_f32(result.data, vmulq_n_f32(vld1q_f32(data), scalar));
                 result.data[3] = 0.0f;
@@ -118,7 +118,7 @@ namespace systems::leal::vector_math {
                 _mm_store_ps(result.data, _mm_div_ps(_mm_load_ps(data), _mm_set1_ps(scalar)));
                 result.data[3] = 0.0f;
                 return result;
-            #elif defined(__VECTOR_MATH_ARCH_ARM)
+            #elif defined(__VECTOR_MATH_ARCH_ARM) && (defined(__arm64__) || defined(__aarch64__))
                 Vector3f result;
                 float inv = 1.0f / scalar;
                 vst1q_f32(result.data, vmulq_n_f32(vld1q_f32(data), inv));
@@ -180,7 +180,7 @@ namespace systems::leal::vector_math {
                 _mm_store_ps(result.data, _mm_sub_ps(_mm_mul_ps(a_yzx, b_zxy), _mm_mul_ps(a_zxy, b_yzx)));
                 result.data[3] = 0.0f;
                 return result;
-            #elif defined(__VECTOR_MATH_ARCH_ARM)
+            #elif defined(__VECTOR_MATH_ARCH_ARM) && (defined(__arm64__) || defined(__aarch64__))
                 float32x4_t a = vld1q_f32(lhs.data);
                 float32x4_t b = vld1q_f32(rhs.data);
                 // vextq_f32 rotates all 4 lanes; we must fix lane 2 because Vector3f has w=0.

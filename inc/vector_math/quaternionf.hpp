@@ -131,7 +131,7 @@ namespace systems::leal::vector_math {
                 this->data[1] = buffer[1];
                 this->data[2] = buffer[2];
                 this->data[3] = buffer[3];
-            #elif defined(__VECTOR_MATH_ARCH_ARM)
+            #elif defined(__VECTOR_MATH_ARCH_ARM) && (defined(__arm64__) || defined(__aarch64__))
                 float32x4_t signs = { -1.0f, -1.0f, -1.0f, 1.0f };
                 alignas(16) float buffer[4] = { this->data[0], this->data[1], this->data[2], this->data[3] };
                 vst1q_f32(buffer, vmulq_f32(vld1q_f32(buffer), signs));

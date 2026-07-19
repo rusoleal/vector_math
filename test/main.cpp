@@ -5,6 +5,7 @@
 #include <gtest/gtest.h>
 #include <vector_math/vector_math.hpp>
 #include <vector_math/vector2.hpp>
+#include <vector_math/batch_transform.hpp>
 
 using namespace systems::leal::vector_math;
 
@@ -1208,6 +1209,70 @@ TEST(QuaterniondSIMD, IdentityAndAxisAngle) {
     auto rotated = q.rotated(v);
     EXPECT_NEAR(rotated.data[0], 0.0, 1e-10);
     EXPECT_NEAR(rotated.data[2], -1.0, 1e-10);
+}
+
+// ============================================================
+// Batch transform with runtime SIMD dispatch
+// ============================================================
+TEST(BatchTransformFloat, MatchesElementwiseMatrixVectorMultiply) {
+    Matrix4f m = Matrix4f::translate(Vector3<float>(1.0f, 2.0f, 3.0f));
+    std::vector<Vector4f> in = {
+        Vector4f(0.0f, 0.0f, 0.0f, 1.0f),
+        Vector4f(1.0f, 0.0f, 0.0f, 1.0f),
+        Vector4f(0.0f, 1.0f, 0.0f, 1.0f),
+        Vector4f(0.0f, 0.0f, 1.0f, 1.0f),
+        Vector4f(7.0f, -3.0f, 2.5f, 1.0f)
+    };
+    std::vector<Vector4f> out(in.size());
+
+    transformVectors(m, in.data(), out.data(), in.size());
+
+    for (size_t i = 0; i < in.size(); ++i)
+        expectNear(out[i], m * in[i], FLOAT_EPS);
+}
+
+TEST(BatchTransformFloat, EmptyInputIsNoOp) {
+    Matrix4f m = Matrix4f::identity();
+    Vector4f v(1.0f, 2.0f, 3.0f, 4.0f);
+    transformVectors(m, &v, &v, 0);
+    expectNear(v, Vector4f(1.0f, 2.0f, 3.0f, 4.0f), FLOAT_EPS);
+}
+
+TEST(BatchTransformDouble, MatchesElementwiseMatrixVectorMultiply) {
+    Matrix4d m = Matrix4d::translate(Vector3<double>(1.0, 2.0, 3.0));
+    std::vector<Vector4d> in = {
+        Vector4d(0.0, 0.0, 0.0, 1.0),
+        Vector4d(1.0, 0.0, 0.0, 1.0),
+        Vector4d(0.0, 1.0, 0.0, 1.0),
+        Vector4d(0.0, 0.0, 1.0, 1.0),
+        Vector4d(7.0, -3.0, 2.5, 1.0)
+    };
+    std::vector<Vector4d> out(in.size());
+
+    transformVectors(m, in.data(), out.data(), in.size());
+
+    for (size_t i = 0; i < in.size(); ++i)
+        expectNear(out[i], m * in[i], DOUBLE_EPS);
+}
+
+TEST(BatchTransformDouble, EmptyInputIsNoOp) {
+    Matrix4d m = Matrix4d::identity();
+    Vector4d v(1.0, 2.0, 3.0, 4.0);
+    transformVectors(m, &v, &v, 0);
+    expectNear(v, Vector4d(1.0, 2.0, 3.0, 4.0), DOUBLE_EPS);
+}
+
+TEST(BatchTransformDouble, InPlaceTransformWorks) {
+    Matrix4d m = Matrix4d::scale(Vector3<double>(2.0, 3.0, 4.0));
+    std::vector<Vector4d> data = {
+        Vector4d(1.0, 2.0, 3.0, 1.0),
+        Vector4d(-1.0, 0.5, 2.0, 1.0)
+    };
+
+    transformVectors(m, data.data(), data.data(), data.size());
+
+    expectNear(data[0], Vector4d(2.0, 6.0, 12.0, 1.0), DOUBLE_EPS);
+    expectNear(data[1], Vector4d(-2.0, 1.5, 8.0, 1.0), DOUBLE_EPS);
 }
 
 int main(int argc, char **argv) {

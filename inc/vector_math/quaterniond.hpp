@@ -76,12 +76,39 @@ namespace systems::leal::vector_math {
 
         /// Quaternion composition (Hamilton product): applies @p rhs first, then this.
         inline Quaterniond operator*(const Quaterniond& rhs) const {
-            return Quaterniond(
-                this->data[3]*rhs.data[0] + this->data[0]*rhs.data[3] + this->data[1]*rhs.data[2] - this->data[2]*rhs.data[1],
-                this->data[3]*rhs.data[1] - this->data[0]*rhs.data[2] + this->data[1]*rhs.data[3] + this->data[2]*rhs.data[0],
-                this->data[3]*rhs.data[2] + this->data[0]*rhs.data[1] - this->data[1]*rhs.data[0] + this->data[2]*rhs.data[3],
-                this->data[3]*rhs.data[3] - this->data[0]*rhs.data[0] - this->data[1]*rhs.data[1] - this->data[2]*rhs.data[2]
-            );
+            #if defined(__VECTOR_MATH_ARCH_X86_X64) && defined(__AVX2__)
+                alignas(32) double rhsBuffer[4] = { rhs.data[0], rhs.data[1], rhs.data[2], rhs.data[3] };
+                __m256d r = _mm256_load_pd(rhsBuffer);
+                __m256d w = _mm256_mul_pd(_mm256_set1_pd(this->data[3]), r);
+
+                __m256d xTerm = _mm256_mul_pd(
+                    _mm256_set1_pd(this->data[0]),
+                    _mm256_mul_pd(_mm256_permute4x64_pd(r, _MM_SHUFFLE(0, 1, 2, 3)),
+                               _mm256_set_pd(-1.0, 1.0, -1.0, 1.0))
+                );
+                __m256d yTerm = _mm256_mul_pd(
+                    _mm256_set1_pd(this->data[1]),
+                    _mm256_mul_pd(_mm256_permute4x64_pd(r, _MM_SHUFFLE(1, 0, 3, 2)),
+                               _mm256_set_pd(-1.0, -1.0, 1.0, 1.0))
+                );
+                __m256d zTerm = _mm256_mul_pd(
+                    _mm256_set1_pd(this->data[2]),
+                    _mm256_mul_pd(_mm256_permute4x64_pd(r, _MM_SHUFFLE(2, 3, 0, 1)),
+                               _mm256_set_pd(-1.0, 1.0, 1.0, -1.0))
+                );
+
+                __m256d resultVec = _mm256_add_pd(_mm256_add_pd(w, xTerm), _mm256_add_pd(yTerm, zTerm));
+                alignas(32) double out[4];
+                _mm256_store_pd(out, resultVec);
+                return Quaterniond(out[0], out[1], out[2], out[3]);
+            #else
+                return Quaterniond(
+                    this->data[3]*rhs.data[0] + this->data[0]*rhs.data[3] + this->data[1]*rhs.data[2] - this->data[2]*rhs.data[1],
+                    this->data[3]*rhs.data[1] - this->data[0]*rhs.data[2] + this->data[1]*rhs.data[3] + this->data[2]*rhs.data[0],
+                    this->data[3]*rhs.data[2] + this->data[0]*rhs.data[1] - this->data[1]*rhs.data[0] + this->data[2]*rhs.data[3],
+                    this->data[3]*rhs.data[3] - this->data[0]*rhs.data[0] - this->data[1]*rhs.data[1] - this->data[2]*rhs.data[2]
+                );
+            #endif
         }
 
         inline double dot(const Quaterniond& rhs) const {

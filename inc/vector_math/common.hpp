@@ -21,6 +21,61 @@
     #define __VECTOR_MATH_ARCH_ARM
 #endif
 
+// ---------------------------------------------------------------------------
+// x86/x64 runtime CPU feature detection
+//
+// The vector_math headers themselves use compile-time ISA macros (__AVX__,
+// __AVX2__, etc.) so that inline operators remain branch-free. These helpers
+// are provided for consumers that want to query capabilities at runtime, e.g.
+// to decide whether to compile a separate AVX2-dispatched kernel or to choose
+// a code path at a higher level.
+// ---------------------------------------------------------------------------
+#if defined(__VECTOR_MATH_ARCH_X86_X64)
+    #if defined(_MSC_VER)
+        #include <intrin.h>
+    #else
+        #include <cpuid.h>
+    #endif
+
+namespace systems::leal::vector_math {
+
+    /// Returns true if the CPU and operating system support AVX.
+    /// When the translation unit is compiled with -mavx (or /arch:AVX on MSVC)
+    /// this short-circuits to true.
+    inline bool cpuSupportsAVX() {
+        #if defined(__AVX__)
+            return true;
+        #elif defined(__GNUC__) || defined(__clang__)
+            return __builtin_cpu_supports("avx");
+        #elif defined(_MSC_VER)
+            int cpuInfo[4];
+            __cpuid(cpuInfo, 1);
+            return (cpuInfo[2] & (1 << 28)) != 0;
+        #else
+            return false;
+        #endif
+    }
+
+    /// Returns true if the CPU and operating system support AVX2.
+    /// When the translation unit is compiled with -mavx2 (or /arch:AVX2 on MSVC)
+    /// this short-circuits to true.
+    inline bool cpuSupportsAVX2() {
+        #if defined(__AVX2__)
+            return true;
+        #elif defined(__GNUC__) || defined(__clang__)
+            return __builtin_cpu_supports("avx2");
+        #elif defined(_MSC_VER)
+            int cpuInfo[4];
+            __cpuidex(cpuInfo, 7, 0);
+            return (cpuInfo[1] & (1 << 5)) != 0;
+        #else
+            return false;
+        #endif
+    }
+
+} // namespace systems::leal::vector_math
+#endif // __VECTOR_MATH_ARCH_X86_X64
+
 namespace systems::leal::vector_math {
 
     /// Returns true if @p value is within machine epsilon of zero.

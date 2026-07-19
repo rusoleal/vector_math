@@ -125,7 +125,7 @@ namespace systems::leal::vector_math
                 _mm_store_ps(&result.data[8],  _mm_add_ps(_mm_load_ps(&this->data[8]),  _mm_load_ps(&rhs.data[8])));
                 _mm_store_ps(&result.data[12], _mm_add_ps(_mm_load_ps(&this->data[12]), _mm_load_ps(&rhs.data[12])));
                 return result;
-            #elif defined(__VECTOR_MATH_ARCH_ARM)
+            #elif defined(__VECTOR_MATH_ARCH_ARM) && (defined(__arm64__) || defined(__aarch64__))
                 Matrix4f result;
                 vst1q_f32(&result.data[0],  vaddq_f32(vld1q_f32(&this->data[0]),  vld1q_f32(&rhs.data[0])));
                 vst1q_f32(&result.data[4],  vaddq_f32(vld1q_f32(&this->data[4]),  vld1q_f32(&rhs.data[4])));
@@ -147,7 +147,7 @@ namespace systems::leal::vector_math
                 _mm_store_ps(&result.data[8],  _mm_sub_ps(_mm_load_ps(&this->data[8]),  _mm_load_ps(&rhs.data[8])));
                 _mm_store_ps(&result.data[12], _mm_sub_ps(_mm_load_ps(&this->data[12]), _mm_load_ps(&rhs.data[12])));
                 return result;
-            #elif defined(__VECTOR_MATH_ARCH_ARM)
+            #elif defined(__VECTOR_MATH_ARCH_ARM) && (defined(__arm64__) || defined(__aarch64__))
                 Matrix4f result;
                 vst1q_f32(&result.data[0],  vsubq_f32(vld1q_f32(&this->data[0]),  vld1q_f32(&rhs.data[0])));
                 vst1q_f32(&result.data[4],  vsubq_f32(vld1q_f32(&this->data[4]),  vld1q_f32(&rhs.data[4])));
@@ -170,7 +170,7 @@ namespace systems::leal::vector_math
                 _mm_store_ps(&result.data[8],  _mm_xor_ps(_mm_load_ps(&this->data[8]),  sign_mask));
                 _mm_store_ps(&result.data[12], _mm_xor_ps(_mm_load_ps(&this->data[12]), sign_mask));
                 return result;
-            #elif defined(__VECTOR_MATH_ARCH_ARM)
+            #elif defined(__VECTOR_MATH_ARCH_ARM) && (defined(__arm64__) || defined(__aarch64__))
                 Matrix4f result;
                 vst1q_f32(&result.data[0],  vnegq_f32(vld1q_f32(&this->data[0])));
                 vst1q_f32(&result.data[4],  vnegq_f32(vld1q_f32(&this->data[4])));
@@ -193,7 +193,7 @@ namespace systems::leal::vector_math
                 _mm_store_ps(&result.data[8],  _mm_mul_ps(_mm_load_ps(&this->data[8]),  s));
                 _mm_store_ps(&result.data[12], _mm_mul_ps(_mm_load_ps(&this->data[12]), s));
                 return result;
-            #elif defined(__VECTOR_MATH_ARCH_ARM)
+            #elif defined(__VECTOR_MATH_ARCH_ARM) && (defined(__arm64__) || defined(__aarch64__))
                 Matrix4f result;
                 vst1q_f32(&result.data[0],  vmulq_n_f32(vld1q_f32(&this->data[0]), scalar));
                 vst1q_f32(&result.data[4],  vmulq_n_f32(vld1q_f32(&this->data[4]), scalar));
