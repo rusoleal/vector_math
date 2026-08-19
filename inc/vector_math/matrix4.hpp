@@ -58,6 +58,14 @@ namespace systems::leal::vector_math
         static Matrix4<DATA_TYPE> identity();
 
         /// Builds a right-handed view matrix looking from @p eye toward @p target with @p up as the up direction.
+        ///
+        /// Matches the standard RH convention (OpenGL's gluLookAt, GLM, etc.): a camera
+        /// facing world -Z (the common "camera placed on +Z, looking at the origin" setup)
+        /// has its right axis along world +X. Before v0.6.0, the right/up axes were built
+        /// with the cross-product operands swapped (`cross(up, forward)` /
+        /// `cross(forward, right)`), which produced a right axis mirrored relative to this
+        /// convention for that common case — confirmed to render world +X on the *left*
+        /// half of the screen. See CHANGELOG.md's 0.6.0 entry.
         static Matrix4<DATA_TYPE> lookAt(const Vector3<DATA_TYPE> &eye, const Vector3<DATA_TYPE> &target, const Vector3<DATA_TYPE> &up);
 
         /// Builds a perspective projection matrix.
@@ -197,10 +205,13 @@ namespace systems::leal::vector_math
         auto zAxis = target - eye;
         zAxis.normalize();
 
-        auto xAxis = Vector3<DATA_TYPE>::cross(up, zAxis);
+        // cross(forward, up) / cross(right, forward) — see lookAt()'s doc comment for
+        // why this order (not cross(up, forward) / cross(forward, right)) matches the
+        // standard RH convention.
+        auto xAxis = Vector3<DATA_TYPE>::cross(zAxis, up);
         xAxis.normalize();
 
-        auto yAxis = Vector3<DATA_TYPE>::cross(zAxis, xAxis);
+        auto yAxis = Vector3<DATA_TYPE>::cross(xAxis, zAxis);
 
         result.data[0] = xAxis.data[0];
         result.data[1] = xAxis.data[1];

@@ -4,6 +4,17 @@
 
 ---
 
+## [0.6.0] - 2026-08-19
+
+### Fixed
+- **`Matrix4::lookAt()` / `Matrix4d::lookAt()` / `Matrix4f::lookAt()` built a mirrored right axis** — the right/up axes were computed as `cross(up, forward)` / `cross(forward, right)`, the reverse operand order from the standard RH convention (`gluLookAt`, GLM, etc.). For the common "camera placed on +Z, looking at the origin" setup, this produced a right axis of world `-X` instead of `+X` — confirmed via a real render: geometry translated to world `+X` appeared on the *left* half of the frame, and single-sided (CCW-front) geometry near the origin was incorrectly backface-culled when paired with a standard `frontFace=ccw`/`cullMode=back` rasterizer state. All three implementations (generic `Matrix4<T>`, and the `Matrix4d`/`Matrix4f` SIMD overrides, which duplicate the same math) now use `cross(forward, up)` / `cross(right, forward)`, matching the standard convention.
+  **This is a breaking change** for any caller relying on the old (mirrored) behavior for camera orientations other than the trivial `forward == +Z` case (which itself flips too — see below). Camera matrices built from an already-oriented transform (e.g. `Matrix4::inverted()` on a node's world matrix) are unaffected; only `lookAt()`'s own eye/target/up construction changes.
+  - `Matrix4Float.LookAtAlongZAxis` / `Matrix4DoubleSIMD.LookAtAlongZAxis` (camera at the origin facing world `+Z`) updated: right axis is now `(-1,0,0)`, not `(1,0,0)` — facing `+Z` is a 180° turn from the now-canonical `-Z`-forward orientation, which swaps left/right.
+  - Added `LookAtFacingNegativeZHasWorldRight` to all three test suites (`Matrix4Float`, `Matrix4DoubleSIMD`, `Matrix4FloatSIMD`) as a direct regression test for the real-world case this bug affected: camera on `+Z` looking at the origin must have world `+X` as its right axis.
+  - Found and verified while investigating a DirectX backface-culling bug in a downstream renderer (`campello_renderer`'s `OffscreenRenderTest.ECSPathRendersToOffscreen`) — confirmed independently against this repo directly (not just the downstream symptom) via a standalone program computing `lookAt()`'s output and the resulting NDC coordinates for a translated object.
+
+---
+
 ## [0.5.0] - 2026-07-18
 
 ### Added

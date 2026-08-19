@@ -564,20 +564,38 @@ TEST(Matrix4Float, Ortho) {
 }
 
 TEST(Matrix4Float, LookAtAlongZAxis) {
-    // Camera at origin looking toward +Z
+    // Camera at origin looking toward +Z (i.e. facing "backward" relative to the
+    // standard RH convention's natural -Z forward — see LookAtFacingNegativeZHasWorldRight
+    // below for the common/expected camera orientation). Right ends up (-1,0,0), not
+    // (1,0,0): turning 180° from the natural -Z-forward orientation swaps left/right.
     auto V = Matrix4<float>::lookAt(
         Vector3<float>(0,0,0),
         Vector3<float>(0,0,1),
         Vector3<float>(0,1,0)
     );
-    // +Z forward: x-col should be (1,0,0), y-col (0,1,0), z-col (0,0,1)
-    EXPECT_NEAR(V.data[0], 1.f, FLOAT_EPS); // xAxis.x
+    EXPECT_NEAR(V.data[0], -1.f, FLOAT_EPS); // xAxis.x
     EXPECT_NEAR(V.data[5], 1.f, FLOAT_EPS); // yAxis.y
     EXPECT_NEAR(V.data[10], 1.f, FLOAT_EPS); // zAxis.z
     // No translation
     EXPECT_NEAR(V.data[3],  0.f, FLOAT_EPS);
     EXPECT_NEAR(V.data[7],  0.f, FLOAT_EPS);
     EXPECT_NEAR(V.data[11], 0.f, FLOAT_EPS);
+}
+
+// Regression test for the v0.6.0 fix: a camera placed on +Z looking at the origin
+// (the common "default camera" setup) must have world +X as its right axis — before
+// the fix, lookAt()'s right/up axes were built with the cross-product operands
+// swapped, producing a right axis of (-1,0,0) here instead: real-world symptom was
+// geometry translated to world +X rendering on the LEFT half of the screen.
+TEST(Matrix4Float, LookAtFacingNegativeZHasWorldRight) {
+    auto V = Matrix4<float>::lookAt(
+        Vector3<float>(0,0,5),
+        Vector3<float>(0,0,0),
+        Vector3<float>(0,1,0)
+    );
+    EXPECT_NEAR(V.data[0], 1.f, FLOAT_EPS);  // xAxis.x — camera right == world +X
+    EXPECT_NEAR(V.data[5], 1.f, FLOAT_EPS);  // yAxis.y — camera up == world +Y
+    EXPECT_NEAR(V.data[10], -1.f, FLOAT_EPS); // zAxis.z — forward == world -Z
 }
 
 TEST(Matrix4Float, LookAtTranslation) {
@@ -835,17 +853,31 @@ TEST(Matrix4DoubleSIMD, LookAtMatchesGeneric) {
 }
 
 TEST(Matrix4DoubleSIMD, LookAtAlongZAxis) {
+    // See Matrix4Float's LookAtAlongZAxis for why right ends up (-1,0,0) here.
     auto V = Matrix4d::lookAt(
         Vector3<double>(0,0,0),
         Vector3<double>(0,0,1),
         Vector3<double>(0,1,0)
     );
-    EXPECT_NEAR(V.data[0],  1.0, DOUBLE_EPS);
+    EXPECT_NEAR(V.data[0],  -1.0, DOUBLE_EPS);
     EXPECT_NEAR(V.data[5],  1.0, DOUBLE_EPS);
     EXPECT_NEAR(V.data[10], 1.0, DOUBLE_EPS);
     EXPECT_NEAR(V.data[3],  0.0, DOUBLE_EPS);
     EXPECT_NEAR(V.data[7],  0.0, DOUBLE_EPS);
     EXPECT_NEAR(V.data[11], 0.0, DOUBLE_EPS);
+}
+
+// Regression test for the v0.6.0 fix — see Matrix4Float's
+// LookAtFacingNegativeZHasWorldRight for the full explanation.
+TEST(Matrix4DoubleSIMD, LookAtFacingNegativeZHasWorldRight) {
+    auto V = Matrix4d::lookAt(
+        Vector3<double>(0,0,5),
+        Vector3<double>(0,0,0),
+        Vector3<double>(0,1,0)
+    );
+    EXPECT_NEAR(V.data[0],  1.0, DOUBLE_EPS);
+    EXPECT_NEAR(V.data[5],  1.0, DOUBLE_EPS);
+    EXPECT_NEAR(V.data[10], -1.0, DOUBLE_EPS);
 }
 
 TEST(Matrix4DoubleSIMD, LookAtTranslation) {
@@ -1058,6 +1090,19 @@ TEST(Matrix4FloatSIMD, LookAtTranslationAlongForwardAxis) {
     );
     EXPECT_NEAR(view.data[11], 5.0f, FLOAT_EPS);
     EXPECT_NEAR(view.data[15], 1.0f, FLOAT_EPS);
+}
+
+// Regression test for the v0.6.0 fix — see Matrix4Float's
+// LookAtFacingNegativeZHasWorldRight for the full explanation.
+TEST(Matrix4FloatSIMD, LookAtFacingNegativeZHasWorldRight) {
+    auto V = Matrix4f::lookAt(
+        Vector3<float>(0,0,5),
+        Vector3<float>(0,0,0),
+        Vector3<float>(0,1,0)
+    );
+    EXPECT_NEAR(V.data[0],  1.0f, FLOAT_EPS);
+    EXPECT_NEAR(V.data[5],  1.0f, FLOAT_EPS);
+    EXPECT_NEAR(V.data[10], -1.0f, FLOAT_EPS);
 }
 
 TEST(Matrix4FloatSIMD, ComposeMatchesGeneric) {

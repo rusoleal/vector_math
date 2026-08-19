@@ -207,6 +207,10 @@ namespace systems::leal::vector_math
         }
 
         /// Builds a right-handed view matrix — optimized override of Matrix4<float>::lookAt.
+        ///
+        /// See Matrix4<double>::lookAt()'s doc comment (matrix4.hpp) for the RH-convention
+        /// note on why xAxis/yAxis use cross(forward, up) / cross(right, forward) — not
+        /// cross(up, forward) / cross(forward, right).
         static inline Matrix4f lookAt(const Vector3<float> &eye, const Vector3<float> &target, const Vector3<float> &up)
         {
             float zx = target.data[0] - eye.data[0];
@@ -215,15 +219,17 @@ namespace systems::leal::vector_math
             float zInvLen = 1.0f / std::sqrt(zx*zx + zy*zy + zz*zz);
             zx *= zInvLen; zy *= zInvLen; zz *= zInvLen;
 
-            float xx = up.data[1]*zz - up.data[2]*zy;
-            float xy = up.data[2]*zx - up.data[0]*zz;
-            float xz = up.data[0]*zy - up.data[1]*zx;
+            // xAxis = normalize(cross(zAxis, up))
+            float xx = zy*up.data[2] - zz*up.data[1];
+            float xy = zz*up.data[0] - zx*up.data[2];
+            float xz = zx*up.data[1] - zy*up.data[0];
             float xInvLen = 1.0f / std::sqrt(xx*xx + xy*xy + xz*xz);
             xx *= xInvLen; xy *= xInvLen; xz *= xInvLen;
 
-            float yx = zy*xz - zz*xy;
-            float yy = zz*xx - zx*xz;
-            float yz = zx*xy - zy*xx;
+            // yAxis = cross(xAxis, zAxis)
+            float yx = xy*zz - xz*zy;
+            float yy = xz*zx - xx*zz;
+            float yz = xx*zy - xy*zx;
 
             float buf[16] = {
                 xx,   xy,   xz,   -(xx*eye.data[0] + xy*eye.data[1] + xz*eye.data[2]),

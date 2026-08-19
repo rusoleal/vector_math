@@ -268,6 +268,10 @@ namespace systems::leal::vector_math
         ///
         /// Inlines all 3D vector math to avoid generic Vec<> loop overhead, intermediate
         /// Vector3 temporaries, isZero checks, and the identity() initialization cost.
+        ///
+        /// See Matrix4<double>::lookAt()'s doc comment (matrix4.hpp) for the RH-convention
+        /// note on why xAxis/yAxis use cross(forward, up) / cross(right, forward) — not
+        /// cross(up, forward) / cross(forward, right).
         static inline Matrix4d lookAt(const Vector3<double> &eye, const Vector3<double> &target, const Vector3<double> &up)
         {
             // zAxis = normalize(target - eye)
@@ -277,17 +281,17 @@ namespace systems::leal::vector_math
             double zInvLen = 1.0 / std::sqrt(zx*zx + zy*zy + zz*zz);
             zx *= zInvLen; zy *= zInvLen; zz *= zInvLen;
 
-            // xAxis = normalize(cross(up, zAxis))
-            double xx = up.data[1]*zz - up.data[2]*zy;
-            double xy = up.data[2]*zx - up.data[0]*zz;
-            double xz = up.data[0]*zy - up.data[1]*zx;
+            // xAxis = normalize(cross(zAxis, up))
+            double xx = zy*up.data[2] - zz*up.data[1];
+            double xy = zz*up.data[0] - zx*up.data[2];
+            double xz = zx*up.data[1] - zy*up.data[0];
             double xInvLen = 1.0 / std::sqrt(xx*xx + xy*xy + xz*xz);
             xx *= xInvLen; xy *= xInvLen; xz *= xInvLen;
 
-            // yAxis = cross(zAxis, xAxis) — unit length by construction, no normalize needed
-            double yx = zy*xz - zz*xy;
-            double yy = zz*xx - zx*xz;
-            double yz = zx*xy - zy*xx;
+            // yAxis = cross(xAxis, zAxis) — unit length by construction, no normalize needed
+            double yx = xy*zz - xz*zy;
+            double yy = xz*zx - xx*zz;
+            double yz = xx*zy - xy*zx;
 
             double buf[16] = {
                 xx,  xy,  xz,  -(xx*eye.data[0] + xy*eye.data[1] + xz*eye.data[2]),
