@@ -32,7 +32,10 @@ target_include_directories(vector_math PUBLIC
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-if (CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)|(x86_64)")
+# Emscripten reports an x86 processor, but WebAssembly has no AVX2/FMA (and
+# the sources' x86 paths are off there: common.hpp only defines
+# __VECTOR_MATH_ARCH_X86_X64 for real x86 targets).
+if (NOT EMSCRIPTEN AND CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)|(x86_64)")
     # Runtime-dispatched AVX2 batch kernels. Compiled into their own TU so the
     # rest of the library can stay at the baseline ISA while still using AVX2
     # when the CPU supports it.

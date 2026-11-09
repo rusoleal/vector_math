@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Fixed
+- **Emscripten builds.** Emscripten reports an x86 processor, so CMake added the AVX2 batch-transform source with `-mavx2 -mfma`, which wasm32 rejects. The x86 block is now skipped under Emscripten (the sources' x86 paths were already off there). Found building campello_renderer for WebGPU.
+
 ---
 
 ## [0.6.0] - 2026-08-19
