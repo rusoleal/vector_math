@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-20
+
 ### Changed
 - **WebAssembly builds use SIMD** (`-msimd128`), on by default: every browser with WebGPU supports it. The option `VECTOR_MATH_WASM_SIMD` turns it off. It applies to the library and is passed on to consumers (compile and link, so wasm-opt accepts the SIMD instructions).
 
